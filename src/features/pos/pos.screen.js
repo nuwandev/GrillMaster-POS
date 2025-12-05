@@ -137,7 +137,7 @@ export class POSScreen {
             .map(
               (product) => `
             <div 
-              class="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all cursor-pointer border border-gray-200 hover:border-primary/30" 
+              class="bg-white rounded-xl shadow-sm hover:shadow-lg cursor-pointer border border-gray-200 hover:border-primary/30 hover-lift animate-press" 
               onclick="posScreen.handleAddToCart('${product.id}')"
             >
               <div class="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-t-xl flex items-center justify-center text-6xl">
@@ -534,8 +534,8 @@ export class POSScreen {
     canConfirm
   ) {
     return `
-      <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onclick="if(event.target === this) posScreen.cancelCheckout()">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden" onclick="event.stopPropagation()">
+      <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-backdrop" onclick="if(event.target === this) posScreen.cancelCheckout()">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-modal" onclick="event.stopPropagation()">
           <div class="px-6 py-5 border-b flex items-center justify-between">
             <div><div class="text-2xl font-bold">Checkout</div><div class="text-sm text-gray-500 mt-1">Review and complete payment</div></div>
             <button onclick="posScreen.cancelCheckout()" class="text-gray-500 hover:text-gray-700 text-xl hover:bg-gray-100 rounded-lg w-10 h-10 flex items-center justify-center">✕</button>
@@ -562,7 +562,7 @@ export class POSScreen {
     const quickButtons = this.getQuickDiscountButtons();
 
     return `
-      <div class="border-2 rounded-xl p-5">
+      <div class="border-2 rounded-xl p-5 h-full flex flex-col">
         <div class="font-semibold text-gray-900 mb-4">Discount</div>
         
         <div class="flex gap-2 mb-4">
@@ -601,7 +601,7 @@ export class POSScreen {
    */
   renderTaxCard(subtotal, discountAmt, taxAmt, grandTotal) {
     return `
-      <div class="border-2 rounded-xl p-5">
+      <div class="border-2 rounded-xl p-5 h-full flex flex-col">
         <div class="font-semibold text-gray-900 mb-4">Tax & Total</div>
 
         <div class="mb-4">
@@ -615,7 +615,7 @@ export class POSScreen {
           />
         </div>
 
-        <div class="space-y-3 p-4 bg-gray-50 rounded-lg border">
+        <div class="space-y-3 p-4 bg-gray-50 rounded-lg border flex-1" data-tax-totals>
           <div class="flex justify-between text-sm">
             <span class="text-gray-600">Subtotal</span>
             <span class="font-semibold">${formatCurrency(subtotal)}</span>
@@ -639,6 +639,37 @@ export class POSScreen {
             <span class="text-2xl font-bold text-primary">${formatCurrency(grandTotal)}</span>
           </div>
         </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Render just the tax totals section (without the input).
+   * @returns {string} Totals HTML
+   */
+  renderTaxTotals(subtotal, discountAmt, taxAmt, grandTotal) {
+    return `
+      <div class="flex justify-between text-sm">
+        <span class="text-gray-600">Subtotal</span>
+        <span class="font-semibold">${formatCurrency(subtotal)}</span>
+      </div>
+      ${
+        discountAmt > 0
+          ? `
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-600">Discount</span>
+          <span class="font-semibold text-green-600">-${formatCurrency(discountAmt)}</span>
+        </div>
+      `
+          : ''
+      }
+      <div class="flex justify-between text-sm">
+        <span class="text-gray-600">Tax (${this.taxRate}%)</span>
+        <span class="font-semibold">${formatCurrency(taxAmt)}</span>
+      </div>
+      <div class="pt-3 border-t flex justify-between items-center">
+        <span class="text-lg font-bold">Total</span>
+        <span class="text-2xl font-bold text-primary">${formatCurrency(grandTotal)}</span>
       </div>
     `;
   }
@@ -749,7 +780,8 @@ export class POSScreen {
 
   setTaxRate(rate) {
     this.taxRate = Number(rate) || 0;
-    this.updateCheckoutModal();
+    // Only update totals, not the input (to keep focus)
+    this.updateTotalsOnly();
   }
 
   setPaymentMethod(method) {
@@ -931,7 +963,8 @@ export class POSScreen {
     this.paymentMethod = 'cash';
     this.lastOrderId = null;
     clearCart();
-    window.app.render();
+    // Navigate to new-order screen for faster POS workflow
+    window.app.navigate('new-order');
   }
 
   /**
@@ -1020,7 +1053,7 @@ export class POSScreen {
       .map(
         (product) => `
         <div 
-          class="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all cursor-pointer border border-gray-200 hover:border-primary/30" 
+          class="bg-white rounded-xl shadow-sm hover:shadow-lg cursor-pointer border border-gray-200 hover:border-primary/30 hover-lift animate-press" 
           onclick="posScreen.handleAddToCart('${product.id}')"
         >
           <div class="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-t-xl flex items-center justify-center text-6xl">

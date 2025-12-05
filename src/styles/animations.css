@@ -1,0 +1,418 @@
+/**
+ * @fileoverview Modular animation styles for GrillMaster POS.
+ * Add smooth transitions and animations without cluttering component code.
+ */
+
+/* ============================================================================
+   BASE TRANSITIONS
+   ============================================================================ */
+
+/* Fade animations */
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+.animate-fade-out {
+  animation: fadeOut 0.2s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+/* ============================================================================
+   MODAL ANIMATIONS
+   ============================================================================ */
+
+/* Modal backdrop */
+.animate-backdrop {
+  animation: backdropIn 0.2s ease-out forwards;
+}
+
+@keyframes backdropIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Modal content - scale up */
+.animate-modal {
+  animation: modalIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-modal-out {
+  animation: modalOut 0.15s ease-in forwards;
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes modalOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+/* ============================================================================
+   SLIDE ANIMATIONS
+   ============================================================================ */
+
+/* Slide from right (for screen transitions) */
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease-out forwards;
+}
+
+.animate-slide-out-left {
+  animation: slideOutLeft 0.3s ease-out forwards;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutLeft {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+}
+
+/* Slide up (for toasts, bottom sheets) */
+.animate-slide-up {
+  animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.2s ease-in forwards;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+
+/* ============================================================================
+   CART ANIMATIONS
+   ============================================================================ */
+
+/* Item added to cart */
+.animate-cart-add {
+  animation: cartAdd 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes cartAdd {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(-10px);
+  }
+
+  50% {
+    transform: scale(1.02);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Item removed from cart */
+.animate-cart-remove {
+  animation: cartRemove 0.2s ease-out forwards;
+}
+
+@keyframes cartRemove {
+  to {
+    opacity: 0;
+    transform: translateX(30px) scale(0.9);
+  }
+}
+
+/* ============================================================================
+   BUTTON ANIMATIONS
+   ============================================================================ */
+
+/* Button press effect */
+.animate-press {
+  transition: transform 0.1s ease;
+}
+
+.animate-press:active {
+  transform: scale(0.97);
+}
+
+/* Success pulse */
+.animate-success {
+  animation: successPulse 0.4s ease-out;
+}
+
+@keyframes successPulse {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ============================================================================
+   PRODUCT GRID ANIMATIONS
+   ============================================================================ */
+
+/* Staggered fade in for grid items */
+.animate-grid-item {
+  opacity: 0;
+  animation: gridItemIn 0.3s ease-out forwards;
+}
+
+.animate-grid-item:nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.animate-grid-item:nth-child(2) {
+  animation-delay: 30ms;
+}
+
+.animate-grid-item:nth-child(3) {
+  animation-delay: 60ms;
+}
+
+.animate-grid-item:nth-child(4) {
+  animation-delay: 90ms;
+}
+
+.animate-grid-item:nth-child(5) {
+  animation-delay: 120ms;
+}
+
+.animate-grid-item:nth-child(6) {
+  animation-delay: 150ms;
+}
+
+.animate-grid-item:nth-child(7) {
+  animation-delay: 180ms;
+}
+
+.animate-grid-item:nth-child(8) {
+  animation-delay: 210ms;
+}
+
+@keyframes gridItemIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================================
+   LOADING STATES
+   ============================================================================ */
+
+.animate-pulse-slow {
+  animation: pulseSlow 2s ease-in-out infinite;
+}
+
+@keyframes pulseSlow {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================================================
+   SCREEN TRANSITIONS
+   ============================================================================ */
+
+/* Main content area transition */
+.screen-enter {
+  animation: screenEnter 0.25s ease-out forwards;
+}
+
+.screen-exit {
+  animation: screenExit 0.15s ease-in forwards;
+}
+
+@keyframes screenEnter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes screenExit {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+/* ============================================================================
+   TOAST NOTIFICATIONS
+   ============================================================================ */
+
+.animate-toast-in {
+  animation: toastIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-toast-out {
+  animation: toastOut 0.2s ease-in forwards;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toastOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+/* ============================================================================
+   UTILITY TRANSITIONS
+   ============================================================================ */
+
+/* Smooth color/background transitions */
+.transition-colors {
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+/* Smooth all properties */
+.transition-all-fast {
+  transition: all 0.15s ease;
+}
+
+.transition-all-normal {
+  transition: all 0.2s ease;
+}
+
+/* Transform transitions */
+.transition-transform {
+  transition: transform 0.2s ease;
+}
+
+/* Hover lift effect */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}

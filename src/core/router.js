@@ -76,8 +76,12 @@ export function createRouter(config) {
     if (!currentScreen || !root) {
       return;
     }
+    // Add screen transition animation
+    root.classList.add('screen-enter');
     root.innerHTML =
       typeof currentScreen.render === 'function' ? currentScreen.render() : '';
+    // Remove animation class after it completes
+    setTimeout(() => root.classList.remove('screen-enter'), 250);
   }
 
   function handleHashChange() {

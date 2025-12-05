@@ -57,10 +57,10 @@ function createActionButton(action, cleanup) {
 function createModalElements(title, html) {
   const overlay = document.createElement('div');
   overlay.className =
-    'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+    'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-backdrop';
   const box = document.createElement('div');
   box.className =
-    'bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200';
+    'bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-modal';
   const header = document.createElement('div');
   header.className = 'px-6 pt-6 text-xl font-bold text-gray-900';
   header.textContent = title;
@@ -201,7 +201,7 @@ export function toast(message, type = 'info', duration = TOAST_DURATION_MS) {
     fixed bottom-6 left-1/2 -translate-x-1/2 z-50
     ${config.bg} text-white px-6 py-3 rounded-xl shadow-lg
     flex items-center gap-3
-    animate-in slide-in-from-bottom duration-300
+    animate-toast-in
   `;
   toast.innerHTML = `
     <span class="text-lg">${config.icon}</span>

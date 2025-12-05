@@ -5,6 +5,7 @@
  * @version 1.0.0
  */
 
+import './styles/animations.css';
 import { initApp } from './core/app.js';
 
 // Initialize application when DOM is ready

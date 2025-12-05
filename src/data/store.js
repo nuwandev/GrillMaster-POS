@@ -292,17 +292,22 @@ function placeOrder(paymentMethod = 'cash', opts = {}) {
   }
 
   const subtotal = opts.subtotal ?? getCartTotal();
+  const discountValue = opts.discountValue ?? 0;
+  const taxAmount = opts.taxAmount ?? 0;
+  // Use passed total if available, otherwise calculate it
+  const total = opts.total ?? subtotal - discountValue + taxAmount;
+
   const order = {
     id: generateId(),
     items: [...store.state.cart],
     customer: store.state.currentCustomer,
     orderType: store.state.currentOrderType,
     subtotal,
-    discountValue: opts.discountValue ?? 0,
+    discountValue,
     discountType: opts.discountType ?? 'none',
     taxRate: opts.taxRate ?? 0,
-    taxAmount: opts.taxAmount ?? 0,
-    total: subtotal - (opts.discountValue ?? 0) + (opts.taxAmount ?? 0),
+    taxAmount,
+    total,
     amountReceived: opts.amountReceived ?? 0,
     changeDue: opts.changeDue ?? 0,
     paymentMethod: String(paymentMethod),
