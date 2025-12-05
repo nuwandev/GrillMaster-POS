@@ -299,7 +299,7 @@ export class MenuScreen {
 
   openEditModal(productId) {
     this.editingProduct = store.state.products.find(
-      (prod) => prod.id === productId
+      (prod) => prod.id == productId
     );
     if (this.editingProduct) {
       this.showProductModal();
@@ -394,7 +394,7 @@ export class MenuScreen {
   }
 
   async handleDelete(productId) {
-    const product = store.state.products.find((prod) => prod.id === productId);
+    const product = store.state.products.find((prod) => prod.id == productId);
     if (!product) {
       return;
     }

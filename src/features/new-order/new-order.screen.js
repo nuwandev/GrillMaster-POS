@@ -283,7 +283,7 @@ export class NewOrderScreen {
    * @returns {string} Item HTML
    */
   renderCustomerItem(customer) {
-    const isSelected = store.state.currentCustomer?.id === customer.id;
+    const isSelected = store.state.currentCustomer?.id == customer.id;
 
     return `
       <div 
@@ -396,7 +396,7 @@ export class NewOrderScreen {
    */
   selectCustomer(customerId) {
     const customer = store.state.customers.find(
-      (cust) => cust.id === customerId
+      (cust) => cust.id == customerId
     );
     if (customer) {
       setCurrentCustomer(customer);

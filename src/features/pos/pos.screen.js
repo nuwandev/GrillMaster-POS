@@ -289,7 +289,7 @@ export class POSScreen {
    * @returns {string} Modal HTML
    */
   renderSuccessModal() {
-    const order = store.state.orders.find((ord) => ord.id === this.lastOrderId);
+    const order = store.state.orders.find((ord) => ord.id == this.lastOrderId);
     if (!order) {
       return '';
     }
@@ -373,7 +373,7 @@ export class POSScreen {
    * @param {number} productId - Product ID
    */
   handleAddToCart(productId) {
-    const product = store.state.products.find((prod) => prod.id === productId);
+    const product = store.state.products.find((prod) => prod.id == productId);
     if (product) {
       addToCart(product);
       this.updateCartSection();
@@ -542,10 +542,13 @@ export class POSScreen {
           </div>
           <div class="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
             ${this.renderOrderSummary()}
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">${this.renderDiscountCard()}${this.renderTaxCard(subtotal, discountAmt, taxAmt, grandTotal)}</div>
-            ${this.renderPaymentMethodCard(grandTotal, amountDue, changeDue)}
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div data-discount-card>${this.renderDiscountCard()}</div>
+              <div data-tax-card>${this.renderTaxCard(subtotal, discountAmt, taxAmt, grandTotal)}</div>
+            </div>
+            <div data-payment-card>${this.renderPaymentMethodCard(grandTotal, amountDue, changeDue)}</div>
           </div>
-          ${this.renderCheckoutFooter(canConfirm)}
+          <div data-checkout-footer>${this.renderCheckoutFooter(canConfirm)}</div>
         </div>
       </div>
     `;
@@ -817,11 +820,49 @@ export class POSScreen {
   }
 
   /**
-   * Update checkout modal.
+   * Update checkout modal sections without full re-render.
    */
   updateCheckoutModal() {
-    if (this.showCheckout) {
-      this.renderCheckoutModal();
+    if (!this.showCheckout) {
+      return;
+    }
+
+    const subtotal = getCartTotal();
+    const discountAmt = this.calculateDiscount(subtotal);
+    const subAfterDiscount = Math.max(0, subtotal - discountAmt);
+    const taxAmt = (subAfterDiscount * this.taxRate) / 100;
+    const grandTotal = Math.max(0, subAfterDiscount + taxAmt);
+    const received = Number(this.amountReceived) || 0;
+    const changeDue = Math.max(0, received - grandTotal);
+    const amountDue = Math.max(0, grandTotal - received);
+    const canConfirm = this.paymentMethod !== 'cash' || received >= grandTotal;
+
+    // Update only the sections that need updating
+    const discountCard = document.querySelector('[data-discount-card]');
+    const taxCard = document.querySelector('[data-tax-card]');
+    const paymentCard = document.querySelector('[data-payment-card]');
+    const footer = document.querySelector('[data-checkout-footer]');
+
+    if (discountCard) {
+      discountCard.innerHTML = this.renderDiscountCard();
+    }
+    if (taxCard) {
+      taxCard.innerHTML = this.renderTaxCard(
+        subtotal,
+        discountAmt,
+        taxAmt,
+        grandTotal
+      );
+    }
+    if (paymentCard) {
+      paymentCard.innerHTML = this.renderPaymentMethodCard(
+        grandTotal,
+        amountDue,
+        changeDue
+      );
+    }
+    if (footer) {
+      footer.innerHTML = this.renderCheckoutFooter(canConfirm);
     }
   }
 
@@ -898,7 +939,7 @@ export class POSScreen {
    * @param {number} orderId - Order ID
    */
   printReceipt(orderId) {
-    const order = store.state.orders.find((ord) => ord.id === orderId);
+    const order = store.state.orders.find((ord) => ord.id == orderId);
     if (!order) {
       return;
     }

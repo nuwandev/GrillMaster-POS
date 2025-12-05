@@ -289,7 +289,7 @@ export class OrdersScreen {
   }
 
   async handleMarkPaid(orderId) {
-    const order = store.state.orders.find((ord) => ord.id === orderId);
+    const order = store.state.orders.find((ord) => ord.id == orderId);
     if (!order) {
       return;
     }
@@ -315,7 +315,7 @@ export class OrdersScreen {
   }
 
   viewDetails(orderId) {
-    const order = store.state.orders.find((ord) => ord.id === orderId);
+    const order = store.state.orders.find((ord) => ord.id == orderId);
     if (!order) {
       return;
     }

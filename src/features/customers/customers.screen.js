@@ -170,7 +170,7 @@ export class CustomersScreen {
    */
   renderCustomerCard(customer) {
     const orderCount = store.state.orders.filter(
-      (ord) => ord.customer?.id === customer.id
+      (ord) => ord.customer?.id == customer.id
     ).length;
     const orderLabel =
       orderCount > 0
@@ -248,7 +248,7 @@ export class CustomersScreen {
   }
 
   editCustomer(customerId) {
-    this.editing = store.state.customers.find((cust) => cust.id === customerId);
+    this.editing = store.state.customers.find((cust) => cust.id == customerId);
     if (this.editing) {
       this.showCustomerModal();
     }
@@ -334,7 +334,7 @@ export class CustomersScreen {
 
   async handleDelete(customerId) {
     const customer = store.state.customers.find(
-      (cust) => cust.id === customerId
+      (cust) => cust.id == customerId
     );
     if (!customer) {
       return;

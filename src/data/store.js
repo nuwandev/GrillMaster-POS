@@ -136,11 +136,11 @@ function addToCart(product) {
     return;
   }
 
-  const existing = store.state.cart.find((item) => item.id === product.id);
+  const existing = store.state.cart.find((item) => item.id == product.id);
   if (existing) {
     store.setState({
       cart: store.state.cart.map((item) =>
-        item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+        item.id == product.id ? { ...item, quantity: item.quantity + 1 } : item
       ),
     });
   } else {
@@ -154,7 +154,7 @@ function addToCart(product) {
 /** Remove a product from the cart. */
 function removeFromCart(productId) {
   store.setState({
-    cart: store.state.cart.filter((item) => item.id !== productId),
+    cart: store.state.cart.filter((item) => item.id != productId),
   });
   saveState();
 }
@@ -167,7 +167,7 @@ function updateCartQuantity(productId, quantity) {
   }
   store.setState({
     cart: store.state.cart.map((item) =>
-      item.id === productId ? { ...item, quantity } : item
+      item.id == productId ? { ...item, quantity } : item
     ),
   });
   saveState();
@@ -230,7 +230,7 @@ function addCustomer(name, phone = '', email = '') {
 /** Update a customer. */
 function updateCustomer(id, updates) {
   const customerIndex = store.state.customers.findIndex(
-    (cust) => cust.id === id
+    (cust) => cust.id == id
   );
   if (customerIndex === -1) {
     return false;
@@ -247,7 +247,7 @@ function updateCustomer(id, updates) {
   customers[customerIndex] = customer;
   store.setState({ customers });
 
-  if (store.state.currentCustomer?.id === id) {
+  if (store.state.currentCustomer?.id == id) {
     store.setState({ currentCustomer: customer });
   }
   saveState();
@@ -256,13 +256,13 @@ function updateCustomer(id, updates) {
 
 /** Delete a customer. */
 function deleteCustomer(customerId) {
-  if (customerId === 0 || customerId === 1) {
+  if (customerId == 0 || customerId == 1) {
     return false;
   } // Can't delete Guest
 
-  const wasSelected = store.state.currentCustomer?.id === customerId;
+  const wasSelected = store.state.currentCustomer?.id == customerId;
   store.setState({
-    customers: store.state.customers.filter((cust) => cust.id !== customerId),
+    customers: store.state.customers.filter((cust) => cust.id != customerId),
   });
 
   if (wasSelected) {
@@ -318,7 +318,7 @@ function placeOrder(paymentMethod = 'cash', opts = {}) {
 
 /** Update an order. */
 function updateOrder(orderId, updates) {
-  const orderIndex = store.state.orders.findIndex((ord) => ord.id === orderId);
+  const orderIndex = store.state.orders.findIndex((ord) => ord.id == orderId);
   if (orderIndex === -1) {
     return false;
   }
@@ -332,7 +332,7 @@ function updateOrder(orderId, updates) {
 
 /** Delete an order. */
 function deleteOrder(orderId) {
-  const filtered = store.state.orders.filter((ord) => ord.id !== orderId);
+  const filtered = store.state.orders.filter((ord) => ord.id != orderId);
   if (filtered.length === store.state.orders.length) {
     return false;
   }
@@ -343,7 +343,7 @@ function deleteOrder(orderId) {
 
 /** Mark order as paid. */
 function markOrderPaid(orderId, amount) {
-  const order = store.state.orders.find((ord) => ord.id === orderId);
+  const order = store.state.orders.find((ord) => ord.id == orderId);
   if (!order) {
     return false;
   }
@@ -388,7 +388,7 @@ function addProduct(name, price, category, image = DEFAULT_PRODUCT_IMAGE) {
 
 /** Update a product. */
 function updateProduct(id, updates) {
-  const productIndex = store.state.products.findIndex((prod) => prod.id === id);
+  const productIndex = store.state.products.findIndex((prod) => prod.id == id);
   if (productIndex === -1) {
     return false;
   }
@@ -413,7 +413,7 @@ function updateProduct(id, updates) {
 /** Delete a product. */
 function deleteProduct(productId) {
   store.setState({
-    products: store.state.products.filter((prod) => prod.id !== productId),
+    products: store.state.products.filter((prod) => prod.id != productId),
   });
   saveState();
   return true;
