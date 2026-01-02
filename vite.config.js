@@ -17,13 +17,4 @@ export default defineConfig({
     open: true,
     cors: true,
   },
-  resolve: {
-    alias: {
-      '@': '/src',
-      '@core': '/src/core',
-      '@features': '/src/features',
-      '@ui': '/src/ui',
-      '@utils': '/src/utils',
-    },
-  },
 });
