@@ -1,6 +1,4 @@
-/**
- * @fileoverview Menu Screen - Manage products/menu items.
- */
+// Menu Screen - Manage products/menu items (add, edit, delete)
 
 import {
   store,
@@ -12,13 +10,7 @@ import { Header } from '../../ui/header.js';
 import { confirm, toast, createModal } from '../../ui/modal.js';
 import { formatCurrency, getCategories } from '../../utils/helpers.js';
 
-/**
- * Menu screen controller.
- */
 export class MenuScreen {
-  /**
-   * @param {Object} options - Screen options
-   */
   constructor(options = {}) {
     this.router = options.router;
     this.selectedCategory = 'All';
@@ -28,10 +20,6 @@ export class MenuScreen {
     this.sortBy = 'name';
   }
 
-  /**
-   * Render the menu screen.
-   * @returns {string} HTML string
-   */
   render() {
     const categories = ['All', ...getCategories(store.state.products)];
     const filteredProducts = this.getFilteredProducts();
@@ -53,11 +41,6 @@ export class MenuScreen {
     `;
   }
 
-  /**
-   * Render stats bar.
-   * @param {string[]} categories - Categories list
-   * @returns {string} Stats HTML
-   */
   renderStatsBar(categories) {
     const products = store.state.products;
     const avgPrice =
@@ -89,10 +72,6 @@ export class MenuScreen {
     `;
   }
 
-  /**
-   * Render search and filter controls.
-   * @returns {string} Controls HTML
-   */
   renderSearchFilters() {
     return `
       <div class="bg-white border-b px-6 py-4">
@@ -118,11 +97,6 @@ export class MenuScreen {
     `;
   }
 
-  /**
-   * Render category tabs.
-   * @param {string[]} categories - Categories list
-   * @returns {string} Tabs HTML
-   */
   renderCategoryTabs(categories) {
     return `
       <div class="bg-white border-b px-6 py-3 overflow-x-auto" data-category-tabs>
@@ -152,11 +126,6 @@ export class MenuScreen {
     `;
   }
 
-  /**
-   * Render products grid.
-   * @param {Array} products - Filtered products
-   * @returns {string} Grid HTML
-   */
   renderProductsGrid(products) {
     if (products.length === 0) {
       return `
@@ -189,11 +158,6 @@ export class MenuScreen {
     `;
   }
 
-  /**
-   * Render a product card.
-   * @param {Object} product - Product data
-   * @returns {string} Card HTML
-   */
   renderProductCard(product) {
     return `
       <div class="bg-white rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all">
@@ -230,10 +194,7 @@ export class MenuScreen {
     `;
   }
 
-  /**
-   * Get filtered and sorted products.
-   * @returns {Array} Filtered products
-   */
+  // Filter and sort products based on current filters
   getFilteredProducts() {
     let products = [...store.state.products];
 
@@ -272,10 +233,6 @@ export class MenuScreen {
     return products;
   }
 
-  // ============================================================================
-  // EVENT HANDLERS
-  // ============================================================================
-
   selectCategory(category) {
     this.selectedCategory = category;
     this.updateProductsGrid();
@@ -311,12 +268,6 @@ export class MenuScreen {
     this.editingProduct = null;
   }
 
-  /**
-   * Get product form HTML.
-   * @param {Object} product - Product data
-   * @param {Array} categories - Available categories
-   * @returns {string} Form HTML
-   */
   getProductFormHtml(product, categories) {
     const categoryOptions = categories
       .map((cat) => `<option value="${cat}">`)
@@ -331,9 +282,6 @@ export class MenuScreen {
     `;
   }
 
-  /**
-   * Show product add/edit modal.
-   */
   showProductModal() {
     const categories = getCategories(store.state.products);
     const isEdit = !!this.editingProduct;
@@ -358,10 +306,6 @@ export class MenuScreen {
     });
   }
 
-  /**
-   * Handle save product.
-   * @param {boolean} isEdit - Whether editing
-   */
   handleSaveProduct(isEdit) {
     const form = document.getElementById('product-form');
     if (!form) {
@@ -414,10 +358,6 @@ export class MenuScreen {
     }
   }
 
-  // ============================================================================
-  // UI UPDATES
-  // ============================================================================
-
   updateProductsGrid() {
     const products = this.getFilteredProducts();
     const gridEl = document.querySelector('[data-products-grid]');
@@ -455,10 +395,7 @@ export class MenuScreen {
     }
   }
 
-  // ============================================================================
-  // LIFECYCLE
-  // ============================================================================
-
+  // Expose this screen instance globally for onclick handlers
   mount() {
     window.menuScreen = this;
   }
