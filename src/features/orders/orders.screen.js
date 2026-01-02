@@ -1,6 +1,4 @@
-/**
- * @fileoverview Orders Screen - View and manage orders.
- */
+// Orders Screen - View and manage orders
 
 import {
   store,
@@ -14,13 +12,7 @@ import { Header } from '../../ui/header.js';
 import { confirm, toast, createModal } from '../../ui/modal.js';
 import { formatCurrency, formatDate } from '../../utils/helpers.js';
 
-/**
- * Orders screen controller.
- */
 export class OrdersScreen {
-  /**
-   * @param {Object} options - Screen options
-   */
   constructor(options = {}) {
     this.router = options.router;
     this.filter = 'all';
@@ -28,10 +20,6 @@ export class OrdersScreen {
     this.searchQuery = '';
   }
 
-  /**
-   * Render the orders screen.
-   * @returns {string} HTML string
-   */
   render() {
     const filteredOrders = this.getFilteredOrders();
     const stats = this.calculateStats(filteredOrders);
@@ -55,11 +43,6 @@ export class OrdersScreen {
     `;
   }
 
-  /**
-   * Render stats cards.
-   * @param {Object} stats - Order statistics
-   * @returns {string} Stats HTML
-   */
   renderStatsCards(stats) {
     return `
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6" data-order-stats>
@@ -83,10 +66,6 @@ export class OrdersScreen {
     `;
   }
 
-  /**
-   * Render filter controls.
-   * @returns {string} Filters HTML
-   */
   renderFilters() {
     return `
       <div class="bg-white rounded-xl border border-gray-200 p-4 mb-4">
@@ -133,11 +112,6 @@ export class OrdersScreen {
     `;
   }
 
-  /**
-   * Render orders list.
-   * @param {Array} orders - Filtered orders
-   * @returns {string} List HTML
-   */
   renderOrdersList(orders) {
     if (orders.length === 0) {
       return `
@@ -156,11 +130,6 @@ export class OrdersScreen {
     `;
   }
 
-  /**
-   * Render order action buttons.
-   * @param {Object} order - Order data
-   * @returns {string} Buttons HTML
-   */
   renderOrderActions(order) {
     const completeBtn =
       order.status !== 'completed'
@@ -179,11 +148,6 @@ export class OrdersScreen {
     `;
   }
 
-  /**
-   * Render an order card.
-   * @param {Object} order - Order data
-   * @returns {string} Card HTML
-   */
   renderOrderCard(order) {
     const customerName = order.customer?.name || 'Guest';
     const itemCount = order.items.reduce((sum, i) => sum + i.quantity, 0);
@@ -209,10 +173,6 @@ export class OrdersScreen {
     `;
   }
 
-  /**
-   * Get filtered orders.
-   * @returns {Array} Filtered orders
-   */
   getFilteredOrders() {
     let orders = [...store.state.orders];
 
@@ -245,11 +205,6 @@ export class OrdersScreen {
     return orders.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
   }
 
-  /**
-   * Calculate stats from orders.
-   * @param {Array} orders - Orders to calculate from
-   * @returns {Object} Statistics
-   */
   calculateStats(orders) {
     return {
       total: orders.length,
@@ -261,10 +216,6 @@ export class OrdersScreen {
       unpaid: orders.filter((ord) => ord.paymentStatus === 'unpaid').length,
     };
   }
-
-  // ============================================================================
-  // EVENT HANDLERS
-  // ============================================================================
 
   setTab(tab) {
     this.tab = tab;
@@ -363,10 +314,6 @@ export class OrdersScreen {
     });
   }
 
-  // ============================================================================
-  // UI UPDATES
-  // ============================================================================
-
   updateOrderList() {
     const filteredOrders = this.getFilteredOrders();
     const listEl = document.querySelector('[data-orders-list]');
@@ -418,10 +365,6 @@ export class OrdersScreen {
       tabsEl.innerHTML = tabsHtml;
     }
   }
-
-  // ============================================================================
-  // LIFECYCLE
-  // ============================================================================
 
   mount() {
     window.ordersScreen = this;
