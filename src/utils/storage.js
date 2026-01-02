@@ -1,8 +1,5 @@
-/**
- * @fileoverview LocalStorage utilities with error handling.
- */
+// LocalStorage helpers with JSON parsing and error handling
 
-/** Save data to localStorage. */
 export function saveToStorage(key, data) {
   try {
     localStorage.setItem(key, JSON.stringify(data));
@@ -13,7 +10,6 @@ export function saveToStorage(key, data) {
   }
 }
 
-/** Load data from localStorage. */
 export function loadFromStorage(key, defaultValue) {
   try {
     const data = localStorage.getItem(key);

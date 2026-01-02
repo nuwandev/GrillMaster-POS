@@ -1,19 +1,8 @@
-/**
- * @fileoverview Shared utility functions.
- * Pure helper functions with no side effects.
- */
+// Pure utility functions - no side effects
 
 import { CURRENCY } from '../core/constants.js';
 
-// ============================================================================
-// FORMATTING UTILITIES
-// ============================================================================
-
-/**
- * Format a number as LKR currency.
- * @param {number|string} amount - Amount to format
- * @returns {string} Formatted currency string
- */
+// Format number as LKR currency (e.g., "LKR 1,500.00")
 export function formatCurrency(amount) {
   const num = Number.isFinite(Number(amount)) ? Number(amount) : 0;
   try {
@@ -26,18 +15,10 @@ export function formatCurrency(amount) {
   }
 }
 
-/**
- * Format a date/time in a friendly way.
- * @param {string|number|Date} dateInput - Date to format
- * @returns {string} Formatted date string
- */
+// Format date in friendly format (e.g., "Dec 5, 2024, 10:30 AM")
 export function formatDate(dateInput) {
   const date = new Date(dateInput);
-
-  if (isNaN(date.getTime())) {
-    return 'Invalid Date';
-  }
-
+  if (isNaN(date.getTime())) return 'Invalid Date';
   return date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -47,31 +28,15 @@ export function formatDate(dateInput) {
   });
 }
 
-// ============================================================================
-// DATA UTILITIES
-// ============================================================================
-
-/**
- * Get distinct categories from products.
- * @param {Array<{category: string}>} products - Product array
- * @returns {string[]} Unique categories
- */
+// Get unique categories from products array
 export function getCategories(products) {
-  if (!Array.isArray(products)) {
-    return [];
-  }
-  return [
-    ...new Set(products.map((product) => product.category).filter(Boolean)),
-  ];
+  if (!Array.isArray(products)) return [];
+  return [...new Set(products.map((p) => p.category).filter(Boolean))];
 }
 
-/**
- * Generate a unique ID based on timestamp.
- * @param {string} [prefix=''] - Optional prefix
- * @returns {string} Unique identifier
- */
+// Generate unique ID using timestamp + random string
 export function generateId(prefix = '') {
-  // eslint-disable-next-line no-magic-numbers -- base36 encoding constants
+  // eslint-disable-next-line no-magic-numbers
   const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 11);
   return prefix ? `${prefix}-${id}` : id;
 }
