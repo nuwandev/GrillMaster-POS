@@ -1,6 +1,4 @@
-/**
- * @fileoverview Customers Screen - Manage customer records.
- */
+// Customers Screen - Manage customer records (add, edit, delete)
 
 import {
   store,
@@ -11,13 +9,7 @@ import {
 import { Header } from '../../ui/header.js';
 import { confirm, toast, createModal } from '../../ui/modal.js';
 
-/**
- * Customers screen controller.
- */
 export class CustomersScreen {
-  /**
-   * @param {Object} options - Screen options
-   */
   constructor(options = {}) {
     this.router = options.router;
     this.showAddForm = false;
@@ -25,10 +17,6 @@ export class CustomersScreen {
     this.searchQuery = '';
   }
 
-  /**
-   * Render the customers screen.
-   * @returns {string} HTML string
-   */
   render() {
     const filteredCustomers = this.getFilteredCustomers();
     const stats = this.getCustomerStats();
@@ -49,12 +37,6 @@ export class CustomersScreen {
     `;
   }
 
-  /**
-   * Render stats bar.
-   * @param {Object} stats - Customer stats
-   * @param {number} showing - Number showing
-   * @returns {string} Stats HTML
-   */
   renderStatsBar(stats, showing) {
     return `
       <div class="bg-white border-b px-6 py-4" data-customer-stats>
@@ -76,10 +58,6 @@ export class CustomersScreen {
     `;
   }
 
-  /**
-   * Render search bar.
-   * @returns {string} Search HTML
-   */
   renderSearchBar() {
     return `
       <div class="bg-white border-b px-6 py-4">
@@ -96,11 +74,6 @@ export class CustomersScreen {
     `;
   }
 
-  /**
-   * Render customer list.
-   * @param {Array} customers - Filtered customers
-   * @returns {string} List HTML
-   */
   renderCustomerList(customers) {
     if (customers.length === 0) {
       return `
@@ -131,11 +104,6 @@ export class CustomersScreen {
     `;
   }
 
-  /**
-   * Render customer contact info.
-   * @param {Object} customer - Customer data
-   * @returns {string} Contact HTML
-   */
   renderContactInfo(customer) {
     const phone = customer.phone
       ? `<div class="flex items-center gap-2 text-sm text-gray-600"><span class="text-gray-400">📞</span><span>${customer.phone}</span></div>`
@@ -146,11 +114,6 @@ export class CustomersScreen {
     return `<div class="space-y-1.5">${phone}${email}</div>`;
   }
 
-  /**
-   * Render customer action buttons.
-   * @param {Object} customer - Customer data
-   * @returns {string} Buttons HTML
-   */
   renderCustomerActions(customer) {
     if (customer.name.toLowerCase() === 'guest') {
       return '';
@@ -163,11 +126,6 @@ export class CustomersScreen {
     `;
   }
 
-  /**
-   * Render a customer card.
-   * @param {Object} customer - Customer data
-   * @returns {string} Card HTML
-   */
   renderCustomerCard(customer) {
     const orderCount = store.state.orders.filter(
       (ord) => ord.customer?.id == customer.id
@@ -196,10 +154,6 @@ export class CustomersScreen {
     `;
   }
 
-  /**
-   * Get filtered customers.
-   * @returns {Array} Filtered customers
-   */
   getFilteredCustomers() {
     const query = this.searchQuery.toLowerCase();
 
@@ -215,10 +169,6 @@ export class CustomersScreen {
     );
   }
 
-  /**
-   * Get customer statistics.
-   * @returns {Object} Statistics
-   */
   getCustomerStats() {
     const customers = store.state.customers;
     const orders = store.state.orders;
@@ -232,10 +182,6 @@ export class CustomersScreen {
       withOrders: customersWithOrders.size,
     };
   }
-
-  // ============================================================================
-  // EVENT HANDLERS
-  // ============================================================================
 
   updateSearchQuery(query) {
     this.searchQuery = query;
@@ -254,11 +200,6 @@ export class CustomersScreen {
     }
   }
 
-  /**
-   * Get customer form HTML.
-   * @param {Object} customer - Customer data
-   * @returns {string} Form HTML
-   */
   getCustomerFormHtml(customer) {
     return `
       <form id="customer-form" class="space-y-4">
@@ -269,9 +210,6 @@ export class CustomersScreen {
     `;
   }
 
-  /**
-   * Show customer add/edit modal.
-   */
   showCustomerModal() {
     const isEdit = !!this.editing;
     const customer = this.editing || { name: '', phone: '', email: '' };
@@ -290,10 +228,6 @@ export class CustomersScreen {
     });
   }
 
-  /**
-   * Handle save customer.
-   * @param {boolean} isEdit - Whether editing
-   */
   handleSaveCustomer(isEdit) {
     const form = document.getElementById('customer-form');
     if (!form) {
@@ -358,10 +292,6 @@ export class CustomersScreen {
     }
   }
 
-  // ============================================================================
-  // UI UPDATES
-  // ============================================================================
-
   updateCustomerList() {
     const customers = this.getFilteredCustomers();
     const listEl = document.querySelector('[data-customer-list]');
@@ -395,10 +325,7 @@ export class CustomersScreen {
     }
   }
 
-  // ============================================================================
-  // LIFECYCLE
-  // ============================================================================
-
+  // Expose this screen instance globally for onclick handlers
   mount() {
     window.customersScreen = this;
   }
