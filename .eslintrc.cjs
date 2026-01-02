@@ -54,9 +54,6 @@ module.exports = {
     // No console in production (warn only)
     'no-console': ['warn', { allow: ['warn', 'error'] }],
 
-    // Require curly braces for all control statements
-    curly: ['error', 'all'],
-
     // No nested ternary
     'no-nested-ternary': 'error',
 
