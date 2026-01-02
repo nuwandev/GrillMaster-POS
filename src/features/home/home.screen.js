@@ -1,37 +1,20 @@
-/**
- * @fileoverview Home screen - Dashboard view for the POS system.
- * Displays stats, quick actions, and navigation to other features.
- */
+// Home Screen - Dashboard with stats, quick actions, and navigation
 
 import { store, getOrderStats, resetData } from '../../data/store.js';
 import { Header } from '../../ui/header.js';
 import { confirm, toast } from '../../ui/modal.js';
 import { formatCurrency } from '../../utils/helpers.js';
 
-/** Maximum number of top products to display. */
 const TOP_PRODUCTS_LIMIT = 4;
-
-/** Clock update interval in milliseconds. */
 const CLOCK_UPDATE_INTERVAL = 1000;
 
-/**
- * Home screen controller.
- */
 export class HomeScreen {
-  /**
-   * @param {Object} options - Screen options
-   * @param {Object} options.router - Router instance
-   */
   constructor(options = {}) {
     this.router = options.router;
     this.now = new Date();
     this.clockInterval = null;
   }
 
-  /**
-   * Render the home screen.
-   * @returns {string} HTML string
-   */
   render() {
     const stats = getOrderStats();
     const topProducts = this.getTopProducts();
@@ -41,12 +24,10 @@ export class HomeScreen {
     return `
       <div class="min-h-screen flex flex-col bg-gray-50">
         ${this.renderHeader()}
-
         <div class="flex-1 overflow-y-auto">
           <div class="max-w-7xl mx-auto p-6">
             ${this.renderNewOrderButton()}
             ${this.renderStatsGrid(stats, avgOrderValue)}
-            
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               ${this.renderTopProducts(topProducts)}
               ${this.renderQuickNav(stats)}
@@ -57,54 +38,30 @@ export class HomeScreen {
     `;
   }
 
-  /**
-   * Render header section.
-   * @returns {string} Header HTML
-   */
   renderHeader() {
     return Header({
       left: '<h1 class="text-2xl font-bold text-gray-900">GrillMaster POS</h1>',
       right: `
         <div class="text-sm text-gray-500 flex items-center gap-2">
-          <span>${this.now.toLocaleDateString('en-US', {
-            weekday: 'long',
-            month: 'short',
-            day: 'numeric',
-          })}</span>
+          <span>${this.now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</span>
           <span class="w-px h-4 bg-gray-300"></span>
-          <span data-clock>${this.now.toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-          })}</span>
+          <span data-clock>${this.now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
         </div>
       `,
     });
   }
 
-  /**
-   * Render new order button.
-   * @returns {string} Button HTML
-   */
   renderNewOrderButton() {
     return `
       <div class="mb-6">
-        <button 
-          onclick="app.navigate('new-order')"
-          class="w-full bg-primary text-white text-2xl font-bold py-12 rounded-xl shadow-lg hover:bg-blue-600 active:scale-98 transition-all"
-        >
+        <button onclick="app.navigate('new-order')" class="w-full bg-primary text-white text-2xl font-bold py-12 rounded-xl shadow-lg hover:bg-blue-600 active:scale-98 transition-all">
           + Start New Order
         </button>
       </div>
     `;
   }
 
-  /**
-   * Render statistics grid.
-   * @param {Object} stats - Order statistics
-   * @param {number} avgOrderValue - Average order value
-   * @returns {string} Stats HTML
-   */
+  // Stats cards row
   renderStatsGrid(stats, avgOrderValue) {
     return `
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -116,14 +73,6 @@ export class HomeScreen {
     `;
   }
 
-  /**
-   * Render a stat card.
-   * @param {string} label - Stat label
-   * @param {string|number} value - Stat value
-   * @param {string} subtitle - Subtitle text
-   * @param {string} colorClass - Value color class
-   * @returns {string} Card HTML
-   */
   renderStatCard(label, value, subtitle, colorClass) {
     return `
       <div class="bg-white rounded-xl p-6 shadow-sm">
@@ -134,20 +83,11 @@ export class HomeScreen {
     `;
   }
 
-  /**
-   * Render top products section.
-   * @param {Array} topProducts - Top selling products
-   * @returns {string} Section HTML
-   */
+  // Top selling products from order history
   renderTopProducts(topProducts) {
     const productList =
       topProducts.length === 0
-        ? `
-          <div class="text-center text-gray-400 py-8">
-            <div class="text-4xl mb-2">📊</div>
-            <div>No orders yet</div>
-          </div>
-        `
+        ? `<div class="text-center text-gray-400 py-8"><div class="text-4xl mb-2">📊</div><div>No orders yet</div></div>`
         : topProducts
             .map(
               (item) => `
@@ -173,49 +113,29 @@ export class HomeScreen {
     `;
   }
 
-  /**
-   * Render quick navigation section.
-   * @param {Object} stats - Order statistics
-   * @returns {string} Section HTML
-   */
+  // Quick navigation buttons
   renderQuickNav(stats) {
     const state = store.state;
-
     return `
       <div class="bg-white rounded-xl p-6 shadow-sm">
         <h3 class="text-lg font-bold mb-4">Quick Access</h3>
         <div class="grid grid-cols-2 gap-3">
-          <button 
-            onclick="app.navigate('orders')"
-            class="p-4 rounded-lg border-2 border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-left"
-          >
+          <button onclick="app.navigate('orders')" class="p-4 rounded-lg border-2 border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-left">
             <div class="text-2xl mb-2">📋</div>
             <div class="font-semibold">Orders</div>
             <div class="text-sm text-gray-500">${stats.total} total</div>
           </button>
-
-          <button 
-            onclick="app.navigate('menu')"
-            class="p-4 rounded-lg border-2 border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-left"
-          >
+          <button onclick="app.navigate('menu')" class="p-4 rounded-lg border-2 border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-left">
             <div class="text-2xl mb-2">📖</div>
             <div class="font-semibold">Menu</div>
             <div class="text-sm text-gray-500">${state.products.length} items</div>
           </button>
-
-          <button 
-            onclick="app.navigate('customers')"
-            class="p-4 rounded-lg border-2 border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-left"
-          >
+          <button onclick="app.navigate('customers')" class="p-4 rounded-lg border-2 border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-left">
             <div class="text-2xl mb-2">👥</div>
             <div class="font-semibold">Customers</div>
             <div class="text-sm text-gray-500">${state.customers.length} total</div>
           </button>
-
-          <button 
-            onclick="homeScreen.handleReset()"
-            class="p-4 rounded-lg border-2 border-gray-200 hover:border-red-500 hover:bg-red-50 transition-all text-left"
-          >
+          <button onclick="homeScreen.handleReset()" class="p-4 rounded-lg border-2 border-gray-200 hover:border-red-500 hover:bg-red-50 transition-all text-left">
             <div class="text-2xl mb-2">🔄</div>
             <div class="font-semibold">Reset</div>
             <div class="text-sm text-gray-500">Clear data</div>
@@ -225,15 +145,10 @@ export class HomeScreen {
     `;
   }
 
-  /**
-   * Get top selling products.
-   * @returns {Array} Top products with sales data
-   */
+  // Aggregate sales data from all orders
   getTopProducts() {
     const productSales = {};
-    const state = store.state;
-
-    state.orders.forEach((order) => {
+    store.state.orders.forEach((order) => {
       order.items.forEach((item) => {
         if (!productSales[item.id]) {
           productSales[item.id] = {
@@ -248,15 +163,11 @@ export class HomeScreen {
         productSales[item.id].revenue += item.price * item.quantity;
       });
     });
-
     return Object.values(productSales)
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, TOP_PRODUCTS_LIMIT);
   }
 
-  /**
-   * Handle data reset.
-   */
   async handleReset() {
     const confirmed = await confirm({
       title: 'Reset All Data',
@@ -265,7 +176,6 @@ export class HomeScreen {
       confirmText: 'Reset',
       danger: true,
     });
-
     if (confirmed) {
       resetData();
       toast('Data has been reset', 'success');
@@ -273,9 +183,7 @@ export class HomeScreen {
     }
   }
 
-  /**
-   * Update clock display.
-   */
+  // Live clock update
   updateClock() {
     const clockEl = document.querySelector('[data-clock]');
     if (clockEl) {
@@ -288,9 +196,7 @@ export class HomeScreen {
     }
   }
 
-  /**
-   * Mount lifecycle - called after render.
-   */
+  // Lifecycle: called after render
   mount() {
     window.homeScreen = this;
     this.clockInterval = setInterval(
@@ -299,9 +205,7 @@ export class HomeScreen {
     );
   }
 
-  /**
-   * Unmount lifecycle - called before navigation.
-   */
+  // Lifecycle: cleanup before leaving screen
   unmount() {
     if (this.clockInterval) {
       clearInterval(this.clockInterval);
