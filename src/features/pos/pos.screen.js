@@ -1,8 +1,4 @@
-/**
- * @fileoverview POS Screen - Main point of sale interface.
- * Handles product selection, cart management, and checkout.
- */
-
+// POS screen: products, cart, and checkout UI (concise comments only)
 import { DEFAULT_TAX_RATE } from '../../core/constants.js';
 import {
   store,
@@ -19,24 +15,11 @@ import { Header } from '../../ui/header.js';
 import { confirm, toast } from '../../ui/modal.js';
 import { formatCurrency, getCategories } from '../../utils/helpers.js';
 
-/* eslint-disable no-magic-numbers -- UI preset values for quick selection buttons */
-/** Quick cash amount buttons. */
 const QUICK_CASH_VALUES = [1000, 2000, 5000, 10000];
-
-/** Quick percentage discount buttons. */
 const PERCENT_VALUES = [5, 10, 15, 20];
-
-/** Quick flat discount buttons. */
 const FLAT_VALUES = [100, 200, 500, 1000];
-/* eslint-enable no-magic-numbers */
 
-/**
- * POS screen controller.
- */
 export class POSScreen {
-  /**
-   * @param {Object} options - Screen options
-   */
   constructor(options = {}) {
     this.router = options.router;
     this.selectedCategory = 'All';
@@ -52,10 +35,6 @@ export class POSScreen {
     this.paymentMethod = 'cash';
   }
 
-  /**
-   * Render the POS screen.
-   * @returns {string} HTML string
-   */
   render() {
     const categories = ['All', ...getCategories(store.state.products)];
     const filteredProducts = this.getFilteredProducts();
@@ -81,11 +60,6 @@ export class POSScreen {
     `;
   }
 
-  /**
-   * Render header.
-   * @param {string} customerName - Current customer name
-   * @returns {string} Header HTML
-   */
   renderHeader(customerName) {
     return Header({
       left: '<button onclick="app.navigate(\'home\')" class="text-gray-600 hover:text-gray-900 text-xl">✕</button>',
@@ -94,11 +68,6 @@ export class POSScreen {
     });
   }
 
-  /**
-   * Render category tabs.
-   * @param {string[]} categories - Category list
-   * @returns {string} Tabs HTML
-   */
   renderCategoryTabs(categories) {
     return `
       <div class="bg-white border-b px-6 py-3 overflow-x-auto" data-category-tabs>
@@ -124,11 +93,6 @@ export class POSScreen {
     `;
   }
 
-  /**
-   * Render product grid.
-   * @param {Array} products - Filtered products
-   * @returns {string} Grid HTML
-   */
   renderProductGrid(products) {
     return `
       <div class="flex-1 overflow-y-auto p-6" data-products-scroll>
@@ -157,10 +121,6 @@ export class POSScreen {
     `;
   }
 
-  /**
-   * Render cart section.
-   * @returns {string} Cart HTML
-   */
   renderCartSection() {
     const cart = store.state.cart;
     const total = getCartTotal();
@@ -184,10 +144,6 @@ export class POSScreen {
     `;
   }
 
-  /**
-   * Render empty cart state.
-   * @returns {string} Empty state HTML
-   */
   renderEmptyCart() {
     return `
       <div class="text-center text-gray-400 mt-12">
@@ -198,11 +154,6 @@ export class POSScreen {
     `;
   }
 
-  /**
-   * Render cart items.
-   * @param {Array} cart - Cart items
-   * @returns {string} Items HTML
-   */
   renderCartItems(cart) {
     return cart
       .map(
@@ -244,12 +195,6 @@ export class POSScreen {
       .join('');
   }
 
-  /**
-   * Render cart footer.
-   * @param {number} total - Cart total
-   * @param {boolean} hasItems - Whether cart has items
-   * @returns {string} Footer HTML
-   */
   renderCartFooter(total, hasItems) {
     return `
       <div class="mb-4">
@@ -284,10 +229,6 @@ export class POSScreen {
     `;
   }
 
-  /**
-   * Render success modal.
-   * @returns {string} Modal HTML
-   */
   renderSuccessModal() {
     const order = store.state.orders.find((ord) => ord.id == this.lastOrderId);
     if (!order) {
@@ -341,10 +282,6 @@ export class POSScreen {
     `;
   }
 
-  /**
-   * Get filtered products based on selected category.
-   * @returns {Array} Filtered products
-   */
   getFilteredProducts() {
     if (this.selectedCategory === 'All') {
       return store.state.products;
@@ -354,24 +291,12 @@ export class POSScreen {
     );
   }
 
-  // ============================================================================
-  // EVENT HANDLERS
-  // ============================================================================
-
-  /**
-   * Select a category.
-   * @param {string} category - Category name
-   */
   selectCategory(category) {
     this.selectedCategory = category;
     this.updateProductGrid();
     this.updateCategoryTabs();
   }
 
-  /**
-   * Handle add to cart.
-   * @param {number} productId - Product ID
-   */
   handleAddToCart(productId) {
     const product = store.state.products.find((prod) => prod.id == productId);
     if (product) {
@@ -380,20 +305,11 @@ export class POSScreen {
     }
   }
 
-  /**
-   * Handle remove from cart.
-   * @param {number} productId - Product ID
-   */
   handleRemoveFromCart(productId) {
     removeFromCart(productId);
     this.updateCartSection();
   }
 
-  /**
-   * Handle quantity update.
-   * @param {number} productId - Product ID
-   * @param {number} quantity - New quantity
-   */
   handleUpdateQuantity(productId, quantity) {
     if (quantity < 1) {
       this.handleRemoveFromCart(productId);
@@ -403,9 +319,6 @@ export class POSScreen {
     }
   }
 
-  /**
-   * Handle clear cart.
-   */
   async handleClearCart() {
     const confirmed = await confirm({
       title: 'Clear Cart',
@@ -420,25 +333,16 @@ export class POSScreen {
     }
   }
 
-  /**
-   * Open checkout modal.
-   */
   checkout() {
     this.showCheckout = true;
     this.renderCheckoutModal();
   }
 
-  /**
-   * Cancel checkout.
-   */
   cancelCheckout() {
     this.showCheckout = false;
     this.closeCheckoutModal();
   }
 
-  /**
-   * Close checkout modal.
-   */
   closeCheckoutModal() {
     const modal = document.getElementById('checkout-modal');
     if (modal) {
@@ -446,9 +350,6 @@ export class POSScreen {
     }
   }
 
-  /**
-   * Render checkout modal.
-   */
   renderCheckoutModal() {
     const modalId = 'checkout-modal';
     let modal = document.getElementById(modalId);
@@ -481,10 +382,6 @@ export class POSScreen {
     );
   }
 
-  /**
-   * Render order summary section for checkout.
-   * @returns {string} HTML
-   */
   renderOrderSummary() {
     const cart = store.state.cart;
     const items = cart
@@ -501,11 +398,6 @@ export class POSScreen {
     `;
   }
 
-  /**
-   * Render checkout modal footer.
-   * @param {boolean} canConfirm - Whether payment can be confirmed
-   * @returns {string} HTML
-   */
   renderCheckoutFooter(canConfirm) {
     const btnClass = canConfirm
       ? 'bg-success hover:bg-green-600 text-white shadow-sm cursor-pointer'
@@ -519,10 +411,6 @@ export class POSScreen {
     `;
   }
 
-  /**
-   * Get checkout modal HTML.
-   * @returns {string} Modal HTML
-   */
   getCheckoutModalHTML(
     subtotal,
     discountAmt,
@@ -554,10 +442,6 @@ export class POSScreen {
     `;
   }
 
-  /**
-   * Render discount card.
-   * @returns {string} Card HTML
-   */
   renderDiscountCard() {
     const quickButtons = this.getQuickDiscountButtons();
 
@@ -595,10 +479,6 @@ export class POSScreen {
     `;
   }
 
-  /**
-   * Render tax and total card.
-   * @returns {string} Card HTML
-   */
   renderTaxCard(subtotal, discountAmt, taxAmt, grandTotal) {
     return `
       <div class="border-2 rounded-xl p-5 h-full flex flex-col">
@@ -643,10 +523,6 @@ export class POSScreen {
     `;
   }
 
-  /**
-   * Render just the tax totals section (without the input).
-   * @returns {string} Totals HTML
-   */
   renderTaxTotals(subtotal, discountAmt, taxAmt, grandTotal) {
     return `
       <div class="flex justify-between text-sm">
@@ -674,10 +550,6 @@ export class POSScreen {
     `;
   }
 
-  /**
-   * Render payment method card.
-   * @returns {string} Card HTML
-   */
   renderPaymentMethodCard(grandTotal, amountDue, changeDue) {
     return `
       <div class="border-2 rounded-xl p-5">
@@ -713,23 +585,11 @@ export class POSScreen {
     `;
   }
 
-  /**
-   * Get payment method icon.
-   * @param {string} method - Payment method
-   * @returns {string} Icon
-   */
   getPaymentMethodIcon(method) {
     const icons = { cash: '💵', card: '💳', digital: '📱', unpaid: '📝' };
     return icons[method] || '💰';
   }
 
-  /**
-   * Render cash payment section.
-   * @param {number} grandTotal - Total amount
-   * @param {number} amountDue - Amount still due
-   * @param {number} changeDue - Change to give
-   * @returns {string} HTML
-   */
   renderCashPaymentSection(grandTotal, amountDue, changeDue) {
     const statusLabel = amountDue > 0 ? 'Amount Due' : 'Change';
     const statusColor = amountDue > 0 ? 'text-red-600' : 'text-green-600';
@@ -761,10 +621,6 @@ export class POSScreen {
     `;
   }
 
-  // ============================================================================
-  // CHECKOUT SETTERS
-  // ============================================================================
-
   setDiscountType(type) {
     this.discountType = type;
     if (type === 'none') {
@@ -780,8 +636,7 @@ export class POSScreen {
 
   setTaxRate(rate) {
     this.taxRate = Number(rate) || 0;
-    // Only update totals, not the input (to keep focus)
-    this.updateTotalsOnly();
+    this.updateTotalsOnly(); // Avoids re-rendering the input to maintain focus
   }
 
   setPaymentMethod(method) {
@@ -797,20 +652,11 @@ export class POSScreen {
     this.updateCheckoutModal();
   }
 
-  /**
-   * Get discount type label.
-   * @param {string} type - Discount type
-   * @returns {string} Label
-   */
   getDiscountTypeLabel(type) {
     const labels = { none: 'None', percent: '%', flat: '₨' };
     return labels[type] || type;
   }
 
-  /**
-   * Get quick discount buttons HTML based on discount type.
-   * @returns {string} Buttons HTML
-   */
   getQuickDiscountButtons() {
     if (this.discountType === 'percent') {
       return PERCENT_VALUES.map(
@@ -851,9 +697,6 @@ export class POSScreen {
     this.updateCheckoutModal();
   }
 
-  /**
-   * Update checkout modal sections without full re-render.
-   */
   updateCheckoutModal() {
     if (!this.showCheckout) {
       return;
@@ -869,7 +712,6 @@ export class POSScreen {
     const amountDue = Math.max(0, grandTotal - received);
     const canConfirm = this.paymentMethod !== 'cash' || received >= grandTotal;
 
-    // Update only the sections that need updating
     const discountCard = document.querySelector('[data-discount-card]');
     const taxCard = document.querySelector('[data-tax-card]');
     const paymentCard = document.querySelector('[data-payment-card]');
@@ -898,11 +740,7 @@ export class POSScreen {
     }
   }
 
-  /**
-   * Calculate discount amount.
-   * @param {number} subtotal - Subtotal amount
-   * @returns {number} Discount amount
-   */
+  // Calculates discount: percentage of subtotal or capped flat amount
   calculateDiscount(subtotal) {
     if (this.discountType === 'percent') {
       return (subtotal * (Number(this.discountValue) || 0)) / 100;
@@ -912,9 +750,6 @@ export class POSScreen {
     return 0;
   }
 
-  /**
-   * Confirm payment and place order.
-   */
   confirmPayment() {
     const subtotal = getCartTotal();
     const discountAmt = this.calculateDiscount(subtotal);
@@ -963,14 +798,9 @@ export class POSScreen {
     this.paymentMethod = 'cash';
     this.lastOrderId = null;
     clearCart();
-    // Navigate to new-order screen for faster POS workflow
     window.app.navigate('new-order');
   }
 
-  /**
-   * Print receipt.
-   * @param {number} orderId - Order ID
-   */
   printReceipt(orderId) {
     const order = store.state.orders.find((ord) => ord.id == orderId);
     if (!order) {
@@ -990,11 +820,6 @@ export class POSScreen {
     w.focus();
   }
 
-  /**
-   * Get receipt HTML.
-   * @param {Object} order - Order data
-   * @returns {string} Receipt HTML
-   */
   getReceiptHTML(order) {
     return `
       <html>
@@ -1030,10 +855,6 @@ export class POSScreen {
       </html>
     `;
   }
-
-  // ============================================================================
-  // UI UPDATES
-  // ============================================================================
 
   updateCartSection() {
     updateSection('[data-cart-section]', this.renderCartSection());
@@ -1074,10 +895,6 @@ export class POSScreen {
     const categories = ['All', ...getCategories(store.state.products)];
     updateSection('[data-category-tabs]', this.renderCategoryTabs(categories));
   }
-
-  // ============================================================================
-  // LIFECYCLE
-  // ============================================================================
 
   mount() {
     window.posScreen = this;
