@@ -1,17 +1,9 @@
-/**
- * @fileoverview Demo data for the GrillMaster POS application.
- * Sample data for customers, products, and orders used for demonstration.
- */
+// Demo data - Sample customers, products, and orders for demonstration
 
-/** Time offsets for demo orders (in milliseconds). */
 const FIRST_ORDER_TIME_OFFSET = 100000;
 const SECOND_ORDER_TIME_OFFSET = 50000;
 
-/**
- * Demo data for initial app state.
- */
 export const demoData = {
-  // Sample customers
   customers: [
     { id: 0, name: 'Guest', phone: '', email: '' },
     { id: 2, name: 'Alice Demo', phone: '0711234567', email: 'alice@test.com' },
@@ -26,7 +18,6 @@ export const demoData = {
     { id: 11, name: 'Jane Demo', phone: '0701237890', email: '' },
   ],
 
-  // Sample menu items
   items: [
     // Beef Burgers
     {
@@ -175,7 +166,6 @@ export const demoData = {
     },
   ],
 
-  // Sample orders
   orders: [
     {
       id: Date.now() - FIRST_ORDER_TIME_OFFSET,

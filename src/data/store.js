@@ -1,7 +1,5 @@
-/**
- * @fileoverview Shared store instance for the application.
- * This provides the global data store using the state management pattern.
- */
+// Global data store - manages all app state (products, orders, customers, cart)
+// Uses reactive store pattern - state persists to localStorage
 
 import { demoData } from './demo-data.js';
 import {
@@ -13,68 +11,7 @@ import { createStore } from '../core/state.js';
 import { generateId } from '../utils/helpers.js';
 import { loadFromStorage, saveToStorage } from '../utils/storage.js';
 
-// ============================================================================
-// INITIAL STATE
-// ============================================================================
-
-/**
- * @typedef {Object} CartItem
- * @property {number} id
- * @property {string} name
- * @property {number} price
- * @property {string} category
- * @property {string} image
- * @property {number} quantity
- */
-
-/**
- * @typedef {Object} Product
- * @property {number} id
- * @property {string} name
- * @property {number} price
- * @property {string} category
- * @property {string} image
- */
-
-/**
- * @typedef {Object} Customer
- * @property {number} id
- * @property {string} name
- * @property {string} phone
- * @property {string} email
- */
-
-/**
- * @typedef {Object} Order
- * @property {number} id
- * @property {CartItem[]} items
- * @property {Customer|null} customer
- * @property {string} orderType
- * @property {number} subtotal
- * @property {number} discountValue
- * @property {string} discountType
- * @property {number} taxRate
- * @property {number} taxAmount
- * @property {number} total
- * @property {number} amountReceived
- * @property {number} changeDue
- * @property {string} paymentMethod
- * @property {string} paymentStatus
- * @property {string} status
- * @property {string} timestamp
- */
-
-/**
- * @typedef {Object} AppState
- * @property {Product[]} products
- * @property {Order[]} orders
- * @property {Customer[]} customers
- * @property {CartItem[]} cart
- * @property {Customer|null} currentCustomer
- * @property {string} currentOrderType
- */
-
-/** @type {AppState} */
+// Initial empty state
 const initialState = {
   products: [],
   orders: [],
@@ -84,19 +21,12 @@ const initialState = {
   currentOrderType: ORDER_TYPES.DINE_IN,
 };
 
-// ============================================================================
-// STORE INSTANCE
-// ============================================================================
-
 const store = createStore(initialState);
 
 // ============================================================================
-// PERSISTENCE
+// PERSISTENCE - Save/Load from localStorage
 // ============================================================================
 
-/**
- * Save current state to localStorage.
- */
 function saveState() {
   const state = store.state;
   saveToStorage(STORAGE_KEYS.PRODUCTS, state.products);
@@ -107,7 +37,7 @@ function saveState() {
   saveToStorage(STORAGE_KEYS.ORDER_TYPE, state.currentOrderType);
 }
 
-/** Load state from localStorage. */
+// Load from localStorage, fallback to demo data if empty
 function loadState() {
   const products = loadFromStorage(STORAGE_KEYS.PRODUCTS, []);
   const orders = loadFromStorage(STORAGE_KEYS.ORDERS, []);
@@ -130,20 +60,20 @@ function loadState() {
 // CART ACTIONS
 // ============================================================================
 
-/** Add a product to the cart. */
+// Add product to cart (increment quantity if already exists)
 function addToCart(product) {
-  if (!product?.id) {
-    return;
-  }
+  if (!product?.id) return;
 
   const existing = store.state.cart.find((item) => item.id == product.id);
   if (existing) {
+    // Increment quantity
     store.setState({
       cart: store.state.cart.map((item) =>
         item.id == product.id ? { ...item, quantity: item.quantity + 1 } : item
       ),
     });
   } else {
+    // Add new item with quantity 1
     store.setState({
       cart: [...store.state.cart, { ...product, quantity: 1 }],
     });
@@ -151,7 +81,6 @@ function addToCart(product) {
   saveState();
 }
 
-/** Remove a product from the cart. */
 function removeFromCart(productId) {
   store.setState({
     cart: store.state.cart.filter((item) => item.id != productId),
@@ -159,7 +88,6 @@ function removeFromCart(productId) {
   saveState();
 }
 
-/** Update quantity of a cart item. */
 function updateCartQuantity(productId, quantity) {
   if (quantity <= 0) {
     removeFromCart(productId);
@@ -173,13 +101,12 @@ function updateCartQuantity(productId, quantity) {
   saveState();
 }
 
-/** Clear the entire cart. */
 function clearCart() {
   store.setState({ cart: [] });
   saveState();
 }
 
-/** Get cart total price. */
+// Calculate cart total: sum of (price × quantity) for all items
 function getCartTotal() {
   return store.state.cart.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -187,7 +114,6 @@ function getCartTotal() {
   );
 }
 
-/** Get cart item count. */
 function getCartCount() {
   return store.state.cart.reduce((sum, item) => sum + item.quantity, 0);
 }
@@ -196,19 +122,18 @@ function getCartCount() {
 // CUSTOMER ACTIONS
 // ============================================================================
 
-/** Set current customer. */
 function setCurrentCustomer(customer) {
   store.setState({ currentCustomer: customer });
   saveState();
 }
 
-/** Add a new customer. */
+// Add customer with validation (phone must be unique)
 function addCustomer(name, phone = '', email = '') {
   const trimmedName = (name || '').trim();
   const trimmedPhone = (phone || '').trim();
-  if (!trimmedName) {
-    return false;
-  }
+  if (!trimmedName) return false;
+
+  // Check for duplicate phone
   if (
     trimmedPhone &&
     store.state.customers.some((cust) => cust.phone === trimmedPhone)
@@ -227,14 +152,11 @@ function addCustomer(name, phone = '', email = '') {
   return customer;
 }
 
-/** Update a customer. */
 function updateCustomer(id, updates) {
   const customerIndex = store.state.customers.findIndex(
     (cust) => cust.id == id
   );
-  if (customerIndex === -1) {
-    return false;
-  }
+  if (customerIndex === -1) return false;
 
   const customer = {
     ...store.state.customers[customerIndex],
@@ -247,6 +169,7 @@ function updateCustomer(id, updates) {
   customers[customerIndex] = customer;
   store.setState({ customers });
 
+  // Update current customer if it's the one being edited
   if (store.state.currentCustomer?.id == id) {
     store.setState({ currentCustomer: customer });
   }
@@ -254,17 +177,16 @@ function updateCustomer(id, updates) {
   return customer;
 }
 
-/** Delete a customer. */
 function deleteCustomer(customerId) {
-  if (customerId == 0 || customerId == 1) {
-    return false;
-  } // Can't delete Guest
+  // Prevent deleting Guest customer (id 0 or 1)
+  if (customerId == 0 || customerId == 1) return false;
 
   const wasSelected = store.state.currentCustomer?.id == customerId;
   store.setState({
     customers: store.state.customers.filter((cust) => cust.id != customerId),
   });
 
+  // Reset to Guest if deleted customer was selected
   if (wasSelected) {
     const guest = store.state.customers.find(
       (cust) => cust.name.toLowerCase() === 'guest'
@@ -279,22 +201,19 @@ function deleteCustomer(customerId) {
 // ORDER ACTIONS
 // ============================================================================
 
-/** Set current order type. */
 function setOrderType(type) {
   store.setState({ currentOrderType: type });
   saveState();
 }
 
-/** Place an order. */
+// Create order from current cart
+// Total calculation: subtotal - discount + tax
 function placeOrder(paymentMethod = 'cash', opts = {}) {
-  if (!store.state.cart.length) {
-    return null;
-  }
+  if (!store.state.cart.length) return null;
 
   const subtotal = opts.subtotal ?? getCartTotal();
   const discountValue = opts.discountValue ?? 0;
   const taxAmount = opts.taxAmount ?? 0;
-  // Use passed total if available, otherwise calculate it
   const total = opts.total ?? subtotal - discountValue + taxAmount;
 
   const order = {
@@ -316,17 +235,15 @@ function placeOrder(paymentMethod = 'cash', opts = {}) {
     timestamp: new Date().toISOString(),
   };
 
+  // Save order and clear cart
   store.setState({ orders: [...store.state.orders, order], cart: [] });
   saveState();
   return order;
 }
 
-/** Update an order. */
 function updateOrder(orderId, updates) {
   const orderIndex = store.state.orders.findIndex((ord) => ord.id == orderId);
-  if (orderIndex === -1) {
-    return false;
-  }
+  if (orderIndex === -1) return false;
 
   const orders = [...store.state.orders];
   orders[orderIndex] = { ...orders[orderIndex], ...updates };
@@ -335,23 +252,18 @@ function updateOrder(orderId, updates) {
   return orders[orderIndex];
 }
 
-/** Delete an order. */
 function deleteOrder(orderId) {
   const filtered = store.state.orders.filter((ord) => ord.id != orderId);
-  if (filtered.length === store.state.orders.length) {
-    return false;
-  }
+  if (filtered.length === store.state.orders.length) return false;
   store.setState({ orders: filtered });
   saveState();
   return true;
 }
 
-/** Mark order as paid. */
+// Mark order as paid and calculate change
 function markOrderPaid(orderId, amount) {
   const order = store.state.orders.find((ord) => ord.id == orderId);
-  if (!order) {
-    return false;
-  }
+  if (!order) return false;
 
   const received = Number.isFinite(amount) ? amount : order.total;
   return updateOrder(orderId, {
@@ -365,11 +277,12 @@ function markOrderPaid(orderId, amount) {
 // PRODUCT ACTIONS
 // ============================================================================
 
-/** Add a new product. */
 function addProduct(name, price, category, image = DEFAULT_PRODUCT_IMAGE) {
   const trimmedName = (name || '').trim();
   const trimmedCategory = (category || '').trim();
   const parsedPrice = parseFloat(price);
+
+  // Validate required fields
   if (
     !trimmedName ||
     !trimmedCategory ||
@@ -391,12 +304,9 @@ function addProduct(name, price, category, image = DEFAULT_PRODUCT_IMAGE) {
   return product;
 }
 
-/** Update a product. */
 function updateProduct(id, updates) {
   const productIndex = store.state.products.findIndex((prod) => prod.id == id);
-  if (productIndex === -1) {
-    return false;
-  }
+  if (productIndex === -1) return false;
 
   const parsedPrice = parseFloat(updates.price);
   const product = {
@@ -415,7 +325,6 @@ function updateProduct(id, updates) {
   return product;
 }
 
-/** Delete a product. */
 function deleteProduct(productId) {
   store.setState({
     products: store.state.products.filter((prod) => prod.id != productId),
@@ -428,7 +337,7 @@ function deleteProduct(productId) {
 // ANALYTICS
 // ============================================================================
 
-/** Get order statistics. */
+// Get order stats for dashboard
 function getOrderStats() {
   const today = new Date().toLocaleDateString();
   const todayOrders = store.state.orders.filter(
@@ -437,14 +346,8 @@ function getOrderStats() {
   return {
     total: store.state.orders.length,
     today: todayOrders.length,
-    revenue: store.state.orders.reduce(
-      (total, ord) => total + (ord.total || 0),
-      0
-    ),
-    todayRevenue: todayOrders.reduce(
-      (total, ord) => total + (ord.total || 0),
-      0
-    ),
+    revenue: store.state.orders.reduce((sum, ord) => sum + (ord.total || 0), 0),
+    todayRevenue: todayOrders.reduce((sum, ord) => sum + (ord.total || 0), 0),
   };
 }
 
@@ -452,7 +355,7 @@ function getOrderStats() {
 // RESET
 // ============================================================================
 
-/** Reset all data to defaults. */
+// Reset all data back to demo defaults
 function resetData() {
   store.setState({
     products: demoData.items,
@@ -465,11 +368,7 @@ function resetData() {
   saveState();
 }
 
-// ============================================================================
-// INITIALIZE
-// ============================================================================
-
-// Load state on module initialization
+// Load saved state when module loads
 loadState();
 
 // ============================================================================
@@ -500,9 +399,8 @@ export {
   addProduct,
   updateProduct,
   deleteProduct,
-  // Analytics
+  // Analytics & Reset
   getOrderStats,
-  // Reset
   resetData,
 };
 
