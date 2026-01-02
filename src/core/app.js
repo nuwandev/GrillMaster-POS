@@ -1,7 +1,5 @@
-/**
- * @fileoverview Application bootstrapping and initialization.
- * Entry point for the GrillMaster POS application.
- */
+// Main application entry point
+// Sets up router with all screen components and initializes the app
 
 import { ROUTES } from './constants.js';
 import { createRouter } from './router.js';
@@ -12,31 +10,20 @@ import { NewOrderScreen } from '../features/new-order/new-order.screen.js';
 import { OrdersScreen } from '../features/orders/orders.screen.js';
 import { POSScreen } from '../features/pos/pos.screen.js';
 
-/**
- * Application class - main entry point.
- * Handles app initialization, routing, and global state.
- */
 class App {
   constructor() {
-    /** @type {HTMLElement|null} */
     this.root = null;
-
-    /** @type {ReturnType<typeof createRouter>|null} */
     this.router = null;
   }
 
-  /**
-   * Initialize the application.
-   */
   init() {
     this.root = document.getElementById('app');
-
     if (!this.root) {
       console.error('Root element #app not found');
       return;
     }
 
-    // Create router with route definitions
+    // Map routes to screen classes
     this.router = createRouter({
       root: this.root,
       routes: {
@@ -49,36 +36,21 @@ class App {
       },
     });
 
-    // Expose app globally for screen access
+    // Expose globally so screens can access navigation
     window.app = this;
-
-    // Initialize router
     this.router.init();
   }
 
-  /**
-   * Navigate to a route.
-   * @param {string} route - Target route
-   */
   navigate(route) {
-    if (this.router) {
-      this.router.navigate(route);
-    }
+    this.router?.navigate(route);
   }
 
-  /**
-   * Render the current screen.
-   */
   render() {
-    if (this.router) {
-      this.router.render();
-    }
+    this.router?.render();
   }
 }
 
-/**
- * Bootstrap the application.
- */
+// Called from main.js when DOM is ready
 export function initApp() {
   const app = new App();
   app.init();

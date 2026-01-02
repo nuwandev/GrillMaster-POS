@@ -1,36 +1,17 @@
-/**
- * @fileoverview Application constants and configuration values.
- * All magic numbers and hard-coded values should be defined here.
- */
+// App-wide constants and configuration
 
-// ============================================================================
-// BUSINESS CONSTANTS
-// ============================================================================
-
-/** Default tax rate as a percentage (15%) */
+// Business settings
 export const DEFAULT_TAX_RATE = 15;
+export const CURRENCY = { CODE: 'LKR', LOCALE: 'en-LK', SYMBOL: 'Rs.' };
 
-/** Default currency settings */
-export const CURRENCY = {
-  CODE: 'LKR',
-  LOCALE: 'en-LK',
-  SYMBOL: 'Rs.',
-};
-
-// ============================================================================
-// ORDER TYPES
-// ============================================================================
-
+// Order types for dine-in, takeaway, delivery
 export const ORDER_TYPES = {
   DINE_IN: 'dine-in',
   TAKEAWAY: 'takeaway',
   DELIVERY: 'delivery',
 };
 
-// ============================================================================
-// STORAGE KEYS
-// ============================================================================
-
+// LocalStorage keys - prefixed to avoid conflicts
 export const STORAGE_KEYS = {
   PRODUCTS: 'grillmaster_products',
   ORDERS: 'grillmaster_orders',
@@ -40,18 +21,11 @@ export const STORAGE_KEYS = {
   ORDER_TYPE: 'grillmaster_order_type',
 };
 
-// ============================================================================
-// UI CONSTANTS
-// ============================================================================
-
+// UI settings
 export const DEFAULT_PRODUCT_IMAGE = '🍽️';
-
 export const TOAST_DURATION_MS = 3000;
 
-// ============================================================================
-// ROUTES
-// ============================================================================
-
+// Route names for navigation
 export const ROUTES = {
   HOME: 'home',
   NEW_ORDER: 'new-order',
