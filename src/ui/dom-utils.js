@@ -1,43 +1,22 @@
-/**
- * @fileoverview DOM utility functions for UI updates.
- */
+// DOM update helpers for partial re-renders (more efficient than full page render)
 
-/**
- * Update a specific section of the DOM without full re-render.
- * @param {string} selector - CSS selector for the element
- * @param {string} html - New HTML content
- * @param {boolean} [replaceOuter=true] - Replace outerHTML if true, innerHTML if false
- * @returns {boolean} Success status
- */
+// Replace element HTML by selector
 export function updateSection(selector, html, replaceOuter = true) {
   const element = document.querySelector(selector);
-
-  if (!element) {
-    return false;
-  }
+  if (!element) return false;
 
   if (replaceOuter) {
     element.outerHTML = html;
   } else {
     element.innerHTML = html;
   }
-
   return true;
 }
 
-/**
- * Update text content of an element (faster than innerHTML for text-only).
- * @param {string} selector - CSS selector
- * @param {string} text - New text content
- * @returns {boolean} Success status
- */
+// Update just text content (faster than innerHTML for text-only)
 export function updateText(selector, text) {
   const element = document.querySelector(selector);
-
-  if (!element) {
-    return false;
-  }
-
+  if (!element) return false;
   element.textContent = text;
   return true;
 }

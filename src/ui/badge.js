@@ -1,10 +1,4 @@
-/**
- * @fileoverview Badge component for status indicators.
- */
-
-/**
- * @typedef {'default'|'primary'|'success'|'warning'|'danger'|'info'} BadgeVariant
- */
+// Status badge component with color variants
 
 const VARIANT_CLASSES = {
   default: 'bg-gray-100 text-gray-700',
@@ -15,15 +9,8 @@ const VARIANT_CLASSES = {
   info: 'bg-cyan-100 text-cyan-700',
 };
 
-/**
- * Render a badge component.
- * @param {{text: string, variant?: BadgeVariant, className?: string}} options
- * @returns {string} Badge HTML
- */
-function Badge(options) {
-  const { text, variant = 'default', className = '' } = options;
+function Badge({ text, variant = 'default', className = '' }) {
   const variantClasses = VARIANT_CLASSES[variant] || VARIANT_CLASSES.default;
-
   return `
     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variantClasses} ${className}">
       ${text}
@@ -31,12 +18,7 @@ function Badge(options) {
   `;
 }
 
-/**
- * Render status badge with predefined mappings.
- * @param {string} status - Status value
- * @param {Object} [mappings] - Custom status to variant mappings
- * @returns {string} Badge HTML
- */
+// Map status strings to colored badges
 export function StatusBadge(status, mappings = {}) {
   const defaultMappings = {
     // Order status
@@ -52,6 +34,5 @@ export function StatusBadge(status, mappings = {}) {
 
   const allMappings = { ...defaultMappings, ...mappings };
   const config = allMappings[status] || { variant: 'default', text: status };
-
   return Badge(config);
 }
