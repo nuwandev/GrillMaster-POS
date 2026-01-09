@@ -448,11 +448,11 @@ export class MenuScreen {
 
   // Router already exposes screen instance globally
   mount() {
-    // No setup needed
+    globalThis.menuScreen = this;
   }
 
   unmount() {
-    // No cleanup needed
+    delete globalThis.menuScreen;
   }
 }
 

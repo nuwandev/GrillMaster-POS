@@ -350,11 +350,11 @@ export class CustomersScreen {
 
   // Router already exposes screen instance globally
   mount() {
-    // No setup needed
+    globalThis.customersScreen = this;
   }
 
   unmount() {
-    // No cleanup needed
+    delete globalThis.customersScreen;
   }
 }
 

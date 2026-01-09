@@ -403,11 +403,11 @@ export class OrdersScreen {
   }
 
   mount() {
-    // Screen is already exposed by router
+    globalThis.ordersScreen = this;
   }
 
   unmount() {
-    // Cleanup handled by router
+    delete globalThis.ordersScreen;
   }
 }
 
