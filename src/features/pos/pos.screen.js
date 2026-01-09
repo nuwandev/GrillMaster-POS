@@ -10,6 +10,7 @@ import {
   placeOrder,
   removeFromCart,
   store,
+  undoLastAction,
   updateCartQuantity,
 } from '../../state/index.js';
 import { updateSection } from '../../ui/dom-utils.js';
