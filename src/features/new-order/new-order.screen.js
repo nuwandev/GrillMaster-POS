@@ -33,7 +33,7 @@ export class NewOrderScreen {
           right: '',
         })}
         <div class="flex-1 overflow-y-auto p-4 md:p-6" style="min-height: 0;">
-          <div class="max-w-6xl w-full mx-auto space-y-4">
+          <div class="w-full space-y-4">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
               ${this.renderOrderTypeSection()}
               ${this.renderCustomerSection()}
@@ -329,7 +329,7 @@ export class NewOrderScreen {
   mount() {
     globalThis.newOrderScreen = this;
   }
-  
+
   unmount() {
     delete globalThis.newOrderScreen;
   }

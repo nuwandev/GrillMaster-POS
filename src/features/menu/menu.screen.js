@@ -53,7 +53,7 @@ export class MenuScreen {
 
     return `
       <div class="bg-white border-b px-6 py-4">
-        <div class="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="w-full grid grid-cols-2 md:grid-cols-4 gap-4">
           <div class="text-center">
             <div class="text-2xl font-bold text-gray-900">${products.length}</div>
             <div class="text-sm text-gray-500">Total Items</div>
@@ -78,7 +78,7 @@ export class MenuScreen {
   renderSearchFilters() {
     return `
       <div class="bg-white border-b px-6 py-4">
-        <div class="max-w-6xl mx-auto flex flex-col md:flex-row gap-3">
+        <div class="w-full flex flex-col md:flex-row gap-3">
           <input
             type="text"
             placeholder="Search products..."
@@ -103,7 +103,7 @@ export class MenuScreen {
   renderCategoryTabs(categories) {
     return `
       <div class="bg-white border-b px-6 py-3 overflow-x-auto">
-        <div class="max-w-6xl mx-auto flex gap-2" data-category-tabs>
+        <div class="w-full flex gap-2" data-category-tabs>
           ${categories
             .map(
               (cat) => `
@@ -133,7 +133,7 @@ export class MenuScreen {
     if (products.length === 0) {
       return `
         <div class="flex-1 overflow-y-auto p-6">
-          <div class="max-w-6xl mx-auto">
+          <div class="w-full">
             <div class="text-center py-20 text-gray-400">
               <svg class="w-24 h-24 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
@@ -154,7 +154,7 @@ export class MenuScreen {
 
     return `
       <div class="flex-1 overflow-y-auto p-6">
-        <div class="max-w-6xl mx-auto">
+        <div class="w-full">
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" data-products-grid>
             ${products.map((product) => this.renderProductCard(product)).join('')}
           </div>

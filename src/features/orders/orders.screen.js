@@ -34,7 +34,7 @@ export class OrdersScreen {
         })}
 
         <div class="flex-1 overflow-y-auto p-4 md:p-6" style="min-height: 0;">
-          <div class="max-w-6xl mx-auto">
+          <div class="w-full">
             ${this.renderStatsCards(stats)}
             ${this.renderFilters()}
             ${this.renderOrdersList(filteredOrders)}

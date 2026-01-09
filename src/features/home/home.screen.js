@@ -31,7 +31,7 @@ export class HomeScreen {
       <div class="h-screen flex flex-col bg-neutral-50 overflow-hidden">
         ${this.renderHeader()}
         <div class="flex-1 overflow-y-auto" style="min-height: 0;">
-          <div class="max-w-7xl mx-auto p-6">
+          <div class="w-full p-6">
             ${this.renderNewOrderButton()}
             ${this.renderStatsGrid(stats, avgOrderValue)}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
