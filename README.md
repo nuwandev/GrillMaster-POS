@@ -29,6 +29,51 @@ _Built with Vanilla JavaScript • Zero Dependencies • Modern Architecture_
 - 🎨 **Modern UI** - Beautiful, responsive interface with Tailwind CSS
 - 💾 **Offline Ready** - Works without internet using localStorage
 - 🔧 **Easy to Customize** - Clean, modular architecture
+- 🔄 **API Ready** - Architecture designed for easy backend integration
+
+---
+
+## 💾 Data Persistence
+
+### Current: localStorage-Based
+
+All data is stored locally in your browser using localStorage. This means:
+
+**Advantages:**
+
+- ✅ Works completely offline
+- ✅ No backend server required
+- ✅ Instant response times
+- ✅ Free hosting (static site)
+- ✅ Perfect for single-device use
+
+**Limitations:**
+
+- ⚠️ Data is device-specific (not synced across devices)
+- ⚠️ Storage limit: ~5-10MB (sufficient for thousands of orders)
+- ⚠️ Clearing browser data will erase all data
+
+**Data Stored:**
+
+- Products (menu items)
+- Orders (transaction history)
+- Customers (contact information)
+- Current cart
+- Current order type (dine-in/takeaway/delivery)
+
+### Future: API Integration
+
+The codebase is architected for easy migration to a REST API backend:
+
+```javascript
+// Current: localStorage (immediate)
+addProduct(name, price) → localStorage → Done
+
+// Future: API (simple change)
+addProduct(name, price) → API Call → Backend Database
+```
+
+See [ARCHITECTURE.md](ARCHITECTURE.md#future-api-migration-guide) for the complete migration guide.
 
 ---
 
