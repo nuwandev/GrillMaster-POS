@@ -1,6 +1,12 @@
 // Home Screen - Dashboard with stats, quick actions, and navigation
 
-import { store, getOrderStats, resetData } from '../../data/store.js';
+import { imageService } from '../../services/image-service.js';
+import {
+  getOrderStats,
+  getTopProducts,
+  resetData,
+  store,
+} from '../../state/index.js';
 import { Header } from '../../ui/header.js';
 import { confirm, toast } from '../../ui/modal.js';
 import { formatCurrency } from '../../utils/helpers.js';
@@ -17,14 +23,14 @@ export class HomeScreen {
 
   render() {
     const stats = getOrderStats();
-    const topProducts = this.getTopProducts();
+    const topProducts = getTopProducts(TOP_PRODUCTS_LIMIT);
     const avgOrderValue =
       stats.today > 0 ? stats.todayRevenue / stats.today : 0;
 
     return `
-      <div class="min-h-screen flex flex-col bg-gray-50">
+      <div class="h-screen flex flex-col bg-neutral-50 overflow-hidden">
         ${this.renderHeader()}
-        <div class="flex-1 overflow-y-auto">
+        <div class="flex-1 overflow-y-auto" style="min-height: 0;">
           <div class="max-w-7xl mx-auto p-6">
             ${this.renderNewOrderButton()}
             ${this.renderStatsGrid(stats, avgOrderValue)}
@@ -40,11 +46,11 @@ export class HomeScreen {
 
   renderHeader() {
     return Header({
-      left: '<h1 class="text-2xl font-bold text-gray-900">GrillMaster POS</h1>',
+      left: '<h1 class="text-xl font-bold text-neutral-900">GrillMaster POS</h1>',
       right: `
-        <div class="text-sm text-gray-500 flex items-center gap-2">
+        <div class="text-xs text-neutral-500 flex items-center gap-2">
           <span>${this.now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</span>
-          <span class="w-px h-4 bg-gray-300"></span>
+          <span class="w-px h-4 bg-neutral-300"></span>
           <span data-clock>${this.now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
         </div>
       `,
@@ -54,8 +60,8 @@ export class HomeScreen {
   renderNewOrderButton() {
     return `
       <div class="mb-6">
-        <button onclick="app.navigate('new-order')" class="w-full bg-primary text-white text-2xl font-bold py-12 rounded-xl shadow-lg hover:bg-blue-600 active:scale-98 transition-all">
-          + Start New Order
+        <button onclick="app.navigate('new-order')" tabindex="1" class="w-full bg-primary text-white text-xl font-bold py-8 rounded hover:bg-primary/90 transition-colors">
+          + Start New Order (Enter)
         </button>
       </div>
     `;
@@ -75,10 +81,10 @@ export class HomeScreen {
 
   renderStatCard(label, value, subtitle, colorClass) {
     return `
-      <div class="bg-white rounded-xl p-6 shadow-sm">
-        <div class="text-sm text-gray-500 mb-1">${label}</div>
-        <div class="text-3xl font-bold ${colorClass}">${value}</div>
-        <div class="text-xs text-gray-400 mt-2">${subtitle}</div>
+      <div class="bg-white rounded p-4 border border-neutral-200">
+        <div class="text-xs text-neutral-500 mb-1">${label}</div>
+        <div class="text-2xl font-bold ${colorClass}">${value}</div>
+        <div class="text-xs text-neutral-400 mt-1">${subtitle}</div>
       </div>
     `;
   }
@@ -87,13 +93,23 @@ export class HomeScreen {
   renderTopProducts(topProducts) {
     const productList =
       topProducts.length === 0
-        ? `<div class="text-center text-gray-400 py-8"><div class="text-4xl mb-2">📊</div><div>No orders yet</div></div>`
+        ? `<div class="text-center text-gray-400 py-8"><div class="text-4xl mb-2">�</div><div>No orders yet</div></div>`
         : topProducts
-            .map(
-              (item) => `
+            .map((item) => {
+              const { src, fallback } = imageService.getImageWithFallback(
+                item.image,
+                'default'
+              );
+              return `
           <div class="flex items-center justify-between mb-3 pb-3 border-b last:border-0">
             <div class="flex items-center gap-3">
-              <span class="text-2xl">${item.image}</span>
+              <img 
+                src="${src}" 
+                alt="${item.name}"
+                class="w-10 h-10 object-cover rounded-lg"
+                onerror="this.src='${fallback}'"
+                loading="lazy"
+              />
               <div>
                 <div class="font-medium">${item.name}</div>
                 <div class="text-sm text-gray-500">${item.sales} sold</div>
@@ -101,8 +117,8 @@ export class HomeScreen {
             </div>
             <div class="text-sm font-semibold text-primary">${formatCurrency(item.revenue)}</div>
           </div>
-        `
-            )
+        `;
+            })
             .join('');
 
     return `
@@ -115,57 +131,34 @@ export class HomeScreen {
 
   // Quick navigation buttons
   renderQuickNav(stats) {
-    const state = store.state;
+    const state = store.getState();
     return `
-      <div class="bg-white rounded-xl p-6 shadow-sm">
-        <h3 class="text-lg font-bold mb-4">Quick Access</h3>
+      <div class="bg-white rounded p-5 border border-neutral-200">
+        <h3 class="text-base font-bold mb-4">Quick Access</h3>
         <div class="grid grid-cols-2 gap-3">
-          <button onclick="app.navigate('orders')" class="p-4 rounded-lg border-2 border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-left">
+          <button onclick="app.navigate('orders')" class="p-4 rounded border border-neutral-200 hover:border-primary hover:bg-neutral-50 transition-colors text-left">
             <div class="text-2xl mb-2">📋</div>
-            <div class="font-semibold">Orders</div>
-            <div class="text-sm text-gray-500">${stats.total} total</div>
+            <div class="font-semibold text-sm">Orders</div>
+            <div class="text-xs text-neutral-500">${stats.total} total</div>
           </button>
-          <button onclick="app.navigate('menu')" class="p-4 rounded-lg border-2 border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-left">
+          <button onclick="app.navigate('menu')" class="p-4 rounded border border-neutral-200 hover:border-primary hover:bg-neutral-50 transition-colors text-left">
             <div class="text-2xl mb-2">📖</div>
-            <div class="font-semibold">Menu</div>
-            <div class="text-sm text-gray-500">${state.products.length} items</div>
+            <div class="font-semibold text-sm">Menu</div>
+            <div class="text-xs text-neutral-500">${state.products.length} items</div>
           </button>
-          <button onclick="app.navigate('customers')" class="p-4 rounded-lg border-2 border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-left">
+          <button onclick="app.navigate('customers')" class="p-4 rounded border border-neutral-200 hover:border-primary hover:bg-neutral-50 transition-colors text-left">
             <div class="text-2xl mb-2">👥</div>
-            <div class="font-semibold">Customers</div>
-            <div class="text-sm text-gray-500">${state.customers.length} total</div>
+            <div class="font-semibold text-sm">Customers</div>
+            <div class="text-xs text-neutral-500">${state.customers.length} total</div>
           </button>
-          <button onclick="homeScreen.handleReset()" class="p-4 rounded-lg border-2 border-gray-200 hover:border-red-500 hover:bg-red-50 transition-all text-left">
+          <button onclick="homeScreen.handleReset()" class="p-4 rounded border border-neutral-200 hover:border-danger hover:bg-danger/10 transition-colors text-left">
             <div class="text-2xl mb-2">🔄</div>
-            <div class="font-semibold">Reset</div>
-            <div class="text-sm text-gray-500">Clear data</div>
+            <div class="font-semibold text-sm">Reset</div>
+            <div class="text-xs text-neutral-500">Clear data</div>
           </button>
         </div>
       </div>
     `;
-  }
-
-  // Aggregate sales data from all orders
-  getTopProducts() {
-    const productSales = {};
-    store.state.orders.forEach((order) => {
-      order.items.forEach((item) => {
-        if (!productSales[item.id]) {
-          productSales[item.id] = {
-            id: item.id,
-            name: item.name,
-            image: item.image,
-            sales: 0,
-            revenue: 0,
-          };
-        }
-        productSales[item.id].sales += item.quantity;
-        productSales[item.id].revenue += item.price * item.quantity;
-      });
-    });
-    return Object.values(productSales)
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, TOP_PRODUCTS_LIMIT);
   }
 
   async handleReset() {
@@ -179,7 +172,7 @@ export class HomeScreen {
     if (confirmed) {
       resetData();
       toast('Data has been reset', 'success');
-      window.app.render();
+      globalThis.app.render();
     }
   }
 
@@ -198,11 +191,23 @@ export class HomeScreen {
 
   // Lifecycle: called after render
   mount() {
-    window.homeScreen = this;
+    globalThis.homeScreen = this;
     this.clockInterval = setInterval(
       () => this.updateClock(),
       CLOCK_UPDATE_INTERVAL
     );
+
+    // Keyboard navigation
+    this.keyboardHandler = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        return;
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        globalThis.app.navigate('new-order');
+      }
+    };
+    document.addEventListener('keydown', this.keyboardHandler);
   }
 
   // Lifecycle: cleanup before leaving screen
@@ -211,7 +216,10 @@ export class HomeScreen {
       clearInterval(this.clockInterval);
       this.clockInterval = null;
     }
-    delete window.homeScreen;
+    if (this.keyboardHandler) {
+      document.removeEventListener('keydown', this.keyboardHandler);
+    }
+    delete globalThis.homeScreen;
   }
 }
 

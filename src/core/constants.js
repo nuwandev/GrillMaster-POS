@@ -1,8 +1,10 @@
 // App-wide constants and configuration
 
-// Business settings
-export const DEFAULT_TAX_RATE = 15;
-export const CURRENCY = { CODE: 'LKR', LOCALE: 'en-LK', SYMBOL: 'Rs.' };
+import { BUSINESS_CONFIG, UI_CONFIG } from './config.js';
+
+// Business settings (imported from config)
+export const DEFAULT_TAX_RATE = BUSINESS_CONFIG.TAX_RATE;
+export const CURRENCY = BUSINESS_CONFIG.CURRENCY;
 
 // Order types for dine-in, takeaway, delivery
 export const ORDER_TYPES = {
@@ -21,9 +23,9 @@ export const STORAGE_KEYS = {
   ORDER_TYPE: 'grillmaster_order_type',
 };
 
-// UI settings
+// UI settings (imported from config)
 export const DEFAULT_PRODUCT_IMAGE = '🍽️';
-export const TOAST_DURATION_MS = 3000;
+export const TOAST_DURATION_MS = UI_CONFIG.TOAST_DURATION;
 
 // Route names for navigation
 export const ROUTES = {

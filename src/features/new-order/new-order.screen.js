@@ -1,11 +1,12 @@
 // New Order Screen - Select order type (dine-in/takeaway/delivery) and customer
 
 import {
-  store,
-  setOrderType,
-  setCurrentCustomer,
   addCustomer,
-} from '../../data/store.js';
+  clearCart,
+  setCurrentCustomer,
+  setOrderType,
+  store,
+} from '../../state/index.js';
 import { updateSection } from '../../ui/dom-utils.js';
 import { Header } from '../../ui/header.js';
 import { toast } from '../../ui/modal.js';
@@ -15,7 +16,7 @@ const MAX_CUSTOMER_DISPLAY = 12;
 export class NewOrderScreen {
   constructor(options = {}) {
     this.router = options.router;
-    this.selectedType = store.state.currentOrderType || 'dine-in';
+    this.selectedType = store.getState().currentOrderType || 'dine-in';
     this.query = '';
     this.showAddForm = false;
     this.newName = '';
@@ -25,14 +26,13 @@ export class NewOrderScreen {
 
   render() {
     return `
-      <div class="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 to-gray-100">
+      <div class="h-screen flex flex-col bg-neutral-50 overflow-hidden">
         ${Header({
-          left: '<button onclick="app.navigate(\'home\')" class="text-gray-600 hover:text-gray-900 text-xl transition-colors">← Back</button>',
+          left: '<button onclick="app.navigate(\'home\')" class="text-neutral-600 hover:text-neutral-900 text-lg transition-colors">← Back</button>',
           center: '<h1 class="text-xl font-bold">New Order</h1>',
-          right:
-            '<span class="text-sm flex items-center gap-1"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>Connected</span>',
+          right: '',
         })}
-        <div class="flex-1 overflow-y-auto p-4 md:p-6">
+        <div class="flex-1 overflow-y-auto p-4 md:p-6" style="min-height: 0;">
           <div class="max-w-6xl w-full mx-auto space-y-4">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
               ${this.renderOrderTypeSection()}
@@ -48,10 +48,10 @@ export class NewOrderScreen {
   // Order type selection (dine-in, takeaway, delivery)
   renderOrderTypeSection() {
     return `
-      <div data-order-type-section class="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow p-5 md:p-6">
+      <div data-order-type-section class="bg-white rounded border border-neutral-200 p-5 md:p-6">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-semibold text-gray-800">Order Type</h2>
-          ${this.selectedType ? '<span class="text-xs text-green-600 font-medium">✓ Selected</span>' : '<span class="text-xs text-gray-400">Required</span>'}
+          <h2 class="text-base font-semibold text-neutral-900">Order Type</h2>
+          ${this.selectedType ? '<span class="text-xs text-success font-medium">✓ Selected</span>' : '<span class="text-xs text-neutral-400">Required</span>'}
         </div>
         <div class="grid grid-cols-3 gap-2 md:gap-3">
           ${this.renderOrderTypeButton('dine-in', '🍽️', 'Dine In')}
@@ -67,10 +67,10 @@ export class NewOrderScreen {
     return `
       <button 
         onclick="newOrderScreen.selectOrderType('${type}')"
-        class="relative py-6 md:py-8 px-3 md:px-6 rounded-xl border-2 transition-all group ${isSelected ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-md scale-105' : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50/50 hover:scale-105'}"
+        class="relative py-6 md:py-8 px-3 md:px-6 rounded border transition-colors ${isSelected ? 'border-primary bg-primary/10 text-primary' : 'border-neutral-200 bg-white text-neutral-700 hover:border-primary hover:bg-neutral-50'}"
       >
-        ${isSelected ? '<div class="absolute top-2 right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center"><span class="text-white text-xs">✓</span></div>' : ''}
-        <div class="text-3xl md:text-4xl mb-2 transition-transform ${isSelected ? 'scale-110' : 'group-hover:scale-110'}">${emoji}</div>
+        ${isSelected ? '<div class="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center"><span class="text-white text-xs">✓</span></div>' : ''}
+        <div class="text-3xl md:text-4xl mb-2">${emoji}</div>
         <div class="font-semibold text-sm md:text-base">${label}</div>
       </button>
     `;
@@ -78,17 +78,17 @@ export class NewOrderScreen {
 
   // Customer selection with search
   renderCustomerSection() {
-    const selectedCustomer = store.state.currentCustomer;
+    const selectedCustomer = store.getState().currentCustomer;
     return `
-      <div data-customer-section class="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow p-5 md:p-6">
+      <div data-customer-section class="bg-white rounded border border-neutral-200 p-5 md:p-6">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-lg font-semibold text-gray-800">Customer</h2>
-          ${selectedCustomer ? `<span class="text-xs text-green-600 font-medium">✓ ${selectedCustomer.name}</span>` : '<span class="text-xs text-gray-400">Optional</span>'}
+          <h2 class="text-base font-semibold text-neutral-900">Customer</h2>
+          ${selectedCustomer ? `<span class="text-xs text-success font-medium">✓ ${selectedCustomer.name}</span>` : '<span class="text-xs text-neutral-400">Optional</span>'}
         </div>
         <div class="relative">
-          <input type="text" data-search placeholder="🔍 Search name or phone..." value="${this.query}" oninput="newOrderScreen.handleSearchInput(this)"
-            class="w-full px-5 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all placeholder:text-gray-400" />
-          ${this.query ? '<button onclick="newOrderScreen.clearSearch()" class="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600">✕</button>' : ''}
+          <input type="text" data-search placeholder="Search name or phone..." value="${this.query}" oninput="newOrderScreen.handleSearchInput(this)"
+            class="w-full px-4 py-2.5 border border-neutral-300 rounded focus:border-primary focus:outline-none transition-colors placeholder:text-neutral-400" />
+          ${this.query ? '<button onclick="newOrderScreen.clearSearch()" class="absolute right-3 top-2.5 text-neutral-400 hover:text-neutral-600 text-xl">×</button>' : ''}
         </div>
         ${this.renderCustomerActions()}
         ${this.showAddForm ? this.renderAddCustomerForm() : ''}
@@ -98,7 +98,7 @@ export class NewOrderScreen {
   }
 
   renderCustomerActions() {
-    const selectedCustomer = store.state.currentCustomer;
+    const selectedCustomer = store.getState().currentCustomer;
     const filteredCustomers = this.getFilteredCustomers();
     const noResults =
       this.query && !this.showAddForm && filteredCustomers.length === 0;
@@ -106,29 +106,29 @@ export class NewOrderScreen {
     return `
       <div data-customer-actions class="flex flex-wrap gap-2 mt-3">
         <button onclick="newOrderScreen.selectGuest()" 
-          class="px-4 py-2 rounded-lg border-2 ${!selectedCustomer || selectedCustomer.name === 'Guest' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'} transition-all text-sm font-medium">
-          👤 Guest
+          class="px-4 py-2 rounded border ${!selectedCustomer || selectedCustomer.name === 'Guest' ? 'border-primary bg-primary/10 text-primary' : 'border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50'} transition-colors text-sm font-medium">
+          Guest
         </button>
         <button onclick="newOrderScreen.toggleAddForm()" 
-          class="px-4 py-2 rounded-lg border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all text-sm font-medium">
+          class="px-4 py-2 rounded border border-neutral-200 hover:border-primary hover:bg-neutral-50 transition-colors text-sm font-medium">
           ➕ Add New
         </button>
-        ${noResults ? `<button onclick="newOrderScreen.toggleAddForm('${this.query.replace(/"/g, '&quot;')}')" class="px-4 py-2 rounded-lg bg-blue-500 text-white border-2 border-blue-500 hover:bg-blue-600 transition-all text-sm font-medium shadow-sm">✨ Add "${this.query}"</button>` : ''}
+        ${noResults ? `<button onclick="newOrderScreen.toggleAddForm('${this.query.replaceAll('"', '&quot;')}')" class="px-4 py-2 rounded bg-primary text-white border border-primary hover:bg-primary/90 transition-colors text-sm font-medium">✨ Add "${this.query}"</button>` : ''}
       </div>
     `;
   }
 
   renderAddCustomerForm() {
     return `
-      <div class="mt-4 p-4 border-2 border-blue-200 rounded-xl bg-blue-50/50">
-        <h3 class="font-semibold text-blue-800 mb-3">Add New Customer</h3>
+      <div class="mt-4 p-4 border border-primary rounded bg-primary/5">
+        <h3 class="font-semibold text-primary mb-3 text-sm">Add New Customer</h3>
         <div class="space-y-3">
-          <input type="text" placeholder="Name *" value="${this.newName}" oninput="newOrderScreen.setNewName(this.value)" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none" />
-          <input type="tel" placeholder="Phone" value="${this.newPhone}" oninput="newOrderScreen.setNewPhone(this.value)" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none" />
-          <input type="email" placeholder="Email" value="${this.newEmail}" oninput="newOrderScreen.setNewEmail(this.value)" class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none" />
+          <input type="text" placeholder="Name *" value="${this.newName}" oninput="newOrderScreen.setNewName(this.value)" class="w-full px-3 py-2 border border-neutral-300 rounded focus:border-primary focus:outline-none text-sm" />
+          <input type="tel" placeholder="Phone" value="${this.newPhone}" oninput="newOrderScreen.setNewPhone(this.value)" class="w-full px-3 py-2 border border-neutral-300 rounded focus:border-primary focus:outline-none text-sm" />
+          <input type="email" placeholder="Email" value="${this.newEmail}" oninput="newOrderScreen.setNewEmail(this.value)" class="w-full px-3 py-2 border border-neutral-300 rounded focus:border-primary focus:outline-none text-sm" />
           <div class="flex gap-2">
-            <button onclick="newOrderScreen.saveNewCustomer()" class="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium">Save</button>
-            <button onclick="newOrderScreen.cancelAddForm()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Cancel</button>
+            <button onclick="newOrderScreen.saveNewCustomer()" class="flex-1 h-10 px-4 bg-primary text-white rounded hover:bg-primary/90 font-medium text-sm">Save</button>
+            <button onclick="newOrderScreen.cancelAddForm()" class="h-10 px-4 bg-neutral-100 text-neutral-700 rounded hover:bg-neutral-200 text-sm">Cancel</button>
           </div>
         </div>
       </div>
@@ -145,8 +145,8 @@ export class NewOrderScreen {
 
     return `
       <div class="mt-4">
-        <div class="text-xs font-medium text-gray-500 mb-2 px-2">${this.query ? 'SEARCH RESULTS' : 'RECENT CUSTOMERS'}</div>
-        <div class="max-h-72 overflow-y-auto divide-y border border-gray-100 rounded-xl" data-customer-list>
+        <div class="text-xs font-medium text-neutral-500 mb-2 px-2">${this.query ? 'SEARCH RESULTS' : 'RECENT CUSTOMERS'}</div>
+        <div class="max-h-72 overflow-y-auto divide-y border border-neutral-200 rounded" data-customer-list>
           ${filteredCustomers
             .slice(0, MAX_CUSTOMER_DISPLAY)
             .map((cust) => this.renderCustomerItem(cust))
@@ -157,23 +157,23 @@ export class NewOrderScreen {
   }
 
   renderCustomerItem(customer) {
-    const isSelected = store.state.currentCustomer?.id == customer.id;
+    const isSelected = store.getState().currentCustomer?.id === customer.id;
     return `
-      <div onclick="newOrderScreen.selectCustomer('${customer.id}')" class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 cursor-pointer transition-colors ${isSelected ? 'bg-blue-50 border-l-4 border-blue-500' : ''}">
-        <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600">${customer.name.charAt(0).toUpperCase()}</div>
+      <div onclick="newOrderScreen.selectCustomer('${customer.id}')" class="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 cursor-pointer transition-colors ${isSelected ? 'bg-primary/10 border-l-4 border-primary' : ''}">
+        <div class="w-10 h-10 rounded-full bg-neutral-200 flex items-center justify-center font-bold text-neutral-600 text-sm">${customer.name.charAt(0).toUpperCase()}</div>
         <div class="flex-1 min-w-0">
-          <div class="font-medium text-gray-800 truncate">${customer.name}</div>
-          ${customer.phone ? `<div class="text-sm text-gray-500">${customer.phone}</div>` : ''}
+          <div class="font-medium text-neutral-900 truncate text-sm">${customer.name}</div>
+          ${customer.phone ? `<div class="text-xs text-neutral-500">${customer.phone}</div>` : ''}
         </div>
-        ${isSelected ? '<span class="text-blue-500">✓</span>' : ''}
+        ${isSelected ? '<span class="text-primary">✓</span>' : ''}
       </div>
     `;
   }
 
   renderStartButton() {
     return `
-      <div class="sticky bottom-0 pt-4 pb-2 bg-gradient-to-t from-gray-100 via-gray-100 to-transparent">
-        <button data-start-btn onclick="newOrderScreen.startOrdering()" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xl md:text-2xl font-bold py-5 md:py-6 rounded-2xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-blue-800 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed" ${!this.selectedType ? 'disabled' : ''}>
+      <div class="sticky bottom-0 pt-4 pb-2">
+        <button data-start-btn onclick="newOrderScreen.startOrdering()" class="w-full bg-primary text-white text-xl font-bold py-5 md:py-6 rounded hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" ${!this.selectedType ? 'disabled' : ''}>
           ${this.selectedType ? 'Start Ordering →' : 'Please Select Order Type'}
         </button>
       </div>
@@ -184,13 +184,16 @@ export class NewOrderScreen {
   getFilteredCustomers() {
     const query = this.query.toLowerCase();
     if (!query) {
-      return store.state.customers
-        .filter((c) => c.name !== 'Guest')
+      return store
+        .getState()
+        .customers.filter((c) => c.name !== 'Guest')
         .slice(0, MAX_CUSTOMER_DISPLAY);
     }
-    return store.state.customers.filter(
-      (c) => c.name.toLowerCase().includes(query) || c.phone.includes(query)
-    );
+    return store
+      .getState()
+      .customers.filter(
+        (c) => c.name.toLowerCase().includes(query) || c.phone.includes(query)
+      );
   }
 
   selectOrderType(type) {
@@ -202,7 +205,18 @@ export class NewOrderScreen {
 
   handleSearchInput(input) {
     this.query = input.value;
-    this.updateCustomerSection();
+    // Only update results, not the input itself to prevent losing focus
+    const resultsContainer = document.querySelector(
+      '[data-customer-list]'
+    )?.parentElement;
+    if (resultsContainer) {
+      resultsContainer.outerHTML = this.renderCustomerResults();
+    }
+    // Update the actions bar (Guest button, Add New button)
+    const actionsContainer = document.querySelector('[data-customer-actions]');
+    if (actionsContainer) {
+      actionsContainer.outerHTML = this.renderCustomerActions();
+    }
   }
 
   clearSearch() {
@@ -211,15 +225,22 @@ export class NewOrderScreen {
   }
 
   selectGuest() {
-    const guest = store.state.customers.find(
-      (c) => c.name.toLowerCase() === 'guest'
-    ) || { id: 0, name: 'Guest', phone: '', email: '' };
+    const guest = store
+      .getState()
+      .customers.find((c) => c.name.toLowerCase() === 'guest') || {
+      id: 0,
+      name: 'Guest',
+      phone: '',
+      email: '',
+    };
     setCurrentCustomer(guest);
     this.updateCustomerSection();
   }
 
   selectCustomer(customerId) {
-    const customer = store.state.customers.find((c) => c.id == customerId);
+    const customer = store
+      .getState()
+      .customers.find((c) => c.id === customerId);
     if (customer) {
       setCurrentCustomer(customer);
       this.updateCustomerSection();
@@ -244,12 +265,15 @@ export class NewOrderScreen {
 
   setNewName(value) {
     this.newName = value;
+    // Don't rerender - just update state
   }
   setNewPhone(value) {
     this.newPhone = value;
+    // Don't rerender - just update state
   }
   setNewEmail(value) {
     this.newEmail = value;
+    // Don't rerender - just update state
   }
 
   saveNewCustomer() {
@@ -257,18 +281,23 @@ export class NewOrderScreen {
       toast('Please enter a name', 'error');
       return;
     }
-    const customer = addCustomer(this.newName, this.newPhone, this.newEmail);
-    if (customer) {
-      setCurrentCustomer(customer);
-      toast(`Customer "${customer.name}" added`, 'success');
-      this.showAddForm = false;
-      this.newName = '';
-      this.newPhone = '';
-      this.newEmail = '';
-      this.query = '';
-      this.updateCustomerSection();
-    } else {
-      toast('Failed to add customer', 'error');
+
+    try {
+      const result = addCustomer(this.newName, this.newPhone, this.newEmail);
+      if (result.success) {
+        setCurrentCustomer(result.customer);
+        toast(`Customer "${result.customer.name}" added`, 'success');
+        this.showAddForm = false;
+        this.newName = '';
+        this.newPhone = '';
+        this.newEmail = '';
+        this.query = '';
+        this.updateCustomerSection();
+      } else {
+        toast(result.error || 'Failed to add customer', 'error');
+      }
+    } catch (error) {
+      toast(error.message || 'Failed to add customer', 'error');
     }
   }
 
@@ -277,7 +306,9 @@ export class NewOrderScreen {
       toast('Please select an order type', 'warning');
       return;
     }
-    window.app.navigate('pos');
+    // Clear previous cart for fresh start
+    clearCart();
+    globalThis.app.navigate('pos');
   }
 
   updateCustomerSection() {
@@ -296,10 +327,10 @@ export class NewOrderScreen {
 
   // Expose this screen instance globally for onclick handlers
   mount() {
-    window.newOrderScreen = this;
+    // Screen is already exposed by router
   }
   unmount() {
-    delete window.newOrderScreen;
+    // Cleanup handled by router
   }
 }
 

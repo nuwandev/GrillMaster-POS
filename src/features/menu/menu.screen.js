@@ -1,14 +1,17 @@
 // Menu Screen - Manage products/menu items (add, edit, delete)
 
+import { imageService } from '../../services/image-service.js';
 import {
-  store,
   addProduct,
-  updateProduct,
   deleteProduct,
-} from '../../data/store.js';
+  getCategories,
+  store,
+  updateProduct,
+} from '../../state/index.js';
+import { updateSection } from '../../ui/dom-utils.js';
 import { Header } from '../../ui/header.js';
-import { confirm, toast, createModal } from '../../ui/modal.js';
-import { formatCurrency, getCategories } from '../../utils/helpers.js';
+import { confirm, createModal, toast } from '../../ui/modal.js';
+import { formatCurrency } from '../../utils/helpers.js';
 
 export class MenuScreen {
   constructor(options = {}) {
@@ -21,16 +24,16 @@ export class MenuScreen {
   }
 
   render() {
-    const categories = ['All', ...getCategories(store.state.products)];
+    const categories = ['All', ...getCategories()];
     const filteredProducts = this.getFilteredProducts();
 
     return `
-      <div class="min-h-screen flex flex-col bg-gray-50">
+      <div class="h-screen flex flex-col bg-neutral-50 overflow-hidden">
         ${Header({
-          left: '<button onclick="app.navigate(\'home\')" class="text-gray-600 hover:text-gray-900 text-xl">← Back</button>',
+          left: '<button onclick="app.navigate(\'home\')" class="text-neutral-600 hover:text-neutral-900 text-lg">← Back</button>',
           center: '<h1 class="text-xl font-bold">Menu Management</h1>',
           right:
-            '<button onclick="menuScreen.openModal()" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition shadow-sm">+ Add Item</button>',
+            '<button onclick="menuScreen.openModal()" class="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90 transition-colors text-sm">+ Add Item</button>',
         })}
 
         ${this.renderStatsBar(categories)}
@@ -42,7 +45,7 @@ export class MenuScreen {
   }
 
   renderStatsBar(categories) {
-    const products = store.state.products;
+    const products = store.getState().products;
     const avgPrice =
       products.length > 0
         ? products.reduce((sum, p) => sum + p.price, 0) / products.length
@@ -78,7 +81,7 @@ export class MenuScreen {
         <div class="max-w-6xl mx-auto flex flex-col md:flex-row gap-3">
           <input
             type="text"
-            placeholder="🔍 Search products..."
+            placeholder="Search products..."
             value="${this.searchQuery}"
             oninput="menuScreen.updateSearchQuery(this.value)"
             class="flex-1 px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-primary focus:outline-none"
@@ -99,8 +102,8 @@ export class MenuScreen {
 
   renderCategoryTabs(categories) {
     return `
-      <div class="bg-white border-b px-6 py-3 overflow-x-auto" data-category-tabs>
-        <div class="max-w-6xl mx-auto flex gap-2">
+      <div class="bg-white border-b px-6 py-3 overflow-x-auto">
+        <div class="max-w-6xl mx-auto flex gap-2" data-category-tabs>
           ${categories
             .map(
               (cat) => `
@@ -114,8 +117,8 @@ export class MenuScreen {
             >
               ${cat} ${
                 cat === 'All'
-                  ? `(${store.state.products.length})`
-                  : `(${store.state.products.filter((prod) => prod.category === cat).length})`
+                  ? `(${store.getState().products.length})`
+                  : `(${store.getState().products.filter((prod) => prod.category === cat).length})`
               }
             </button>
           `
@@ -132,7 +135,9 @@ export class MenuScreen {
         <div class="flex-1 overflow-y-auto p-6">
           <div class="max-w-6xl mx-auto">
             <div class="text-center py-20 text-gray-400">
-              <div class="text-7xl mb-4">🍽️</div>
+              <svg class="w-24 h-24 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+              </svg>
               <div class="text-xl font-medium">No products found</div>
               <div class="text-sm mt-2">Try adjusting your search or filters</div>
               <button 
@@ -159,10 +164,20 @@ export class MenuScreen {
   }
 
   renderProductCard(product) {
+    const imageData = imageService.getImageWithFallback(
+      product.image,
+      product.category
+    );
     return `
       <div class="bg-white rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all">
-        <div class="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-t-xl flex items-center justify-center text-7xl">
-          ${product.image || '🍽️'}
+        <div class="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-t-xl flex items-center justify-center overflow-hidden">
+          <img 
+            src="${imageData.src}" 
+            alt="${product.name}"
+            class="w-full h-full object-cover"
+            onerror="this.src='${imageData.fallback}'"
+            loading="lazy"
+          />
         </div>
         
         <div class="p-5">
@@ -196,7 +211,7 @@ export class MenuScreen {
 
   // Filter and sort products based on current filters
   getFilteredProducts() {
-    let products = [...store.state.products];
+    let products = [...store.getState().products];
 
     // Filter by category
     if (this.selectedCategory !== 'All') {
@@ -255,11 +270,15 @@ export class MenuScreen {
   }
 
   openEditModal(productId) {
-    this.editingProduct = store.state.products.find(
-      (prod) => prod.id == productId
+    console.log('Opening edit modal for product:', productId, typeof productId);
+    this.editingProduct = store.getState().products.find(
+      (prod) => prod.id == productId // Use == for type coercion
     );
+    console.log('Found product:', this.editingProduct);
     if (this.editingProduct) {
       this.showProductModal();
+    } else {
+      console.error('Product not found with id:', productId);
     }
   }
 
@@ -277,13 +296,13 @@ export class MenuScreen {
         <div><label class="block text-sm font-medium text-gray-700 mb-1">Name *</label><input type="text" name="name" value="${product.name}" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-primary focus:outline-none" placeholder="Product name" /></div>
         <div><label class="block text-sm font-medium text-gray-700 mb-1">Price *</label><input type="number" name="price" value="${product.price}" required min="0" step="0.01" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-primary focus:outline-none" placeholder="0.00" /></div>
         <div><label class="block text-sm font-medium text-gray-700 mb-1">Category *</label><input type="text" name="category" value="${product.category}" required list="categories" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-primary focus:outline-none" placeholder="Select or type category" /><datalist id="categories">${categoryOptions}</datalist></div>
-        <div><label class="block text-sm font-medium text-gray-700 mb-1">Image (emoji)</label><input type="text" name="image" value="${product.image || ''}" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-primary focus:outline-none" placeholder="🍔" /></div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-1">Image Path</label><input type="text" name="image" value="${product.image || ''}" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-primary focus:outline-none" placeholder="products/item.jpg" /></div>
       </form>
     `;
   }
 
   showProductModal() {
-    const categories = getCategories(store.state.products);
+    const categories = getCategories(store.getState().products);
     const isEdit = !!this.editingProduct;
     const product = this.editingProduct || {
       name: '',
@@ -309,6 +328,7 @@ export class MenuScreen {
   handleSaveProduct(isEdit) {
     const form = document.getElementById('product-form');
     if (!form) {
+      console.error('Product form not found');
       return;
     }
 
@@ -316,7 +336,9 @@ export class MenuScreen {
     const name = formData.get('name');
     const price = parseFloat(formData.get('price'));
     const category = formData.get('category');
-    const image = formData.get('image') || '🍽️';
+    const image = formData.get('image') || 'products/placeholder.jpg';
+
+    console.log('Saving product:', { name, price, category, image, isEdit });
 
     if (!name || !category || isNaN(price)) {
       toast('Please fill in all required fields', 'error');
@@ -324,24 +346,43 @@ export class MenuScreen {
     }
 
     if (isEdit && this.editingProduct) {
-      updateProduct(this.editingProduct.id, { name, price, category, image });
-      toast('Product updated', 'success');
+      console.log('Updating product:', this.editingProduct.id);
+      const result = updateProduct(this.editingProduct.id, {
+        name,
+        price,
+        category,
+        image,
+      });
+      if (result.success) {
+        toast('Product updated', 'success');
+      } else {
+        toast(result.error || 'Failed to update product', 'error');
+        return;
+      }
     } else {
-      addProduct(name, price, category, image);
-      toast('Product added', 'success');
+      console.log('Adding new product');
+      const result = addProduct(name, price, category, image);
+      if (result.success) {
+        toast('Product added', 'success');
+      } else {
+        toast(result.error || 'Failed to add product', 'error');
+        return;
+      }
     }
 
     this.editingProduct = null;
     this.closeModal();
+    console.log('Calling updateProductsGrid()');
     this.updateProductsGrid();
     this.updateCategoryTabs();
+    console.log('Product grid updated');
   }
 
   async handleDelete(productId) {
-    const product = store.state.products.find((prod) => prod.id == productId);
-    if (!product) {
-      return;
-    }
+    const product = store
+      .getState()
+      .products.find((prod) => prod.id === productId);
+    if (!product) return;
 
     const confirmed = await confirm({
       title: 'Delete Product',
@@ -363,45 +404,55 @@ export class MenuScreen {
     const gridEl = document.querySelector('[data-products-grid]');
 
     if (gridEl) {
+      // Save scroll position
+      const scrollContainer =
+        gridEl.closest('[data-products-scroll]') || gridEl.parentElement;
+      const scrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
+
       gridEl.innerHTML = products
         .map((prod) => this.renderProductCard(prod))
         .join('');
+
+      // Restore scroll position
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollTop;
+      }
     }
   }
 
   updateCategoryTabs() {
-    const categories = ['All', ...getCategories(store.state.products)];
-    const tabsEl = document.querySelector('[data-category-tabs]');
+    const categories = ['All', ...getCategories()];
+    const buttonsHtml = categories
+      .map(
+        (cat) => `
+        <button 
+          onclick="menuScreen.selectCategory('${cat}')"
+          class="px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${
+            this.selectedCategory === cat
+              ? 'bg-primary text-white shadow-sm'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }"
+        >
+          ${cat} ${
+            cat === 'All'
+              ? `(${store.getState().products.length})`
+              : `(${store.getState().products.filter((prod) => prod.category === cat).length})`
+          }
+        </button>
+      `
+      )
+      .join('');
 
-    if (tabsEl) {
-      tabsEl.innerHTML = `
-        <div class="flex gap-2 flex-wrap">
-          ${categories
-            .map(
-              (cat) => `
-            <button
-              onclick="menuScreen.selectCategory('${cat}')"
-              class="px-4 py-2 rounded-lg text-sm font-medium transition ${
-                this.selectedCategory === cat
-                  ? 'bg-primary text-white shadow-md'
-                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
-              }"
-            >${cat}</button>
-          `
-            )
-            .join('')}
-        </div>
-      `;
-    }
+    updateSection('[data-category-tabs]', buttonsHtml, false); // Use innerHTML, not outerHTML
   }
 
-  // Expose this screen instance globally for onclick handlers
+  // Router already exposes screen instance globally
   mount() {
-    window.menuScreen = this;
+    // No setup needed
   }
 
   unmount() {
-    delete window.menuScreen;
+    // No cleanup needed
   }
 }
 

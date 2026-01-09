@@ -1,6 +1,8 @@
 // Simple reactive store using observer pattern
 // Listeners get notified whenever state changes
 
+import { logger } from '../utils/logger.js';
+
 export function createStore(initialState) {
   let state = { ...initialState };
   const listeners = new Set();
@@ -21,7 +23,10 @@ export function createStore(initialState) {
       try {
         fn(getState());
       } catch (e) {
-        console.error('Listener error:', e);
+        logger.error('State listener error', {
+          error: e.message,
+          stack: e.stack,
+        });
       }
     });
   }

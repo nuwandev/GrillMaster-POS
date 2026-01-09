@@ -1,13 +1,13 @@
 // Customers Screen - Manage customer records (add, edit, delete)
 
 import {
-  store,
   addCustomer,
-  updateCustomer,
   deleteCustomer,
-} from '../../data/store.js';
+  store,
+  updateCustomer,
+} from '../../state/index.js';
 import { Header } from '../../ui/header.js';
-import { confirm, toast, createModal } from '../../ui/modal.js';
+import { confirm, createModal, toast } from '../../ui/modal.js';
 
 export class CustomersScreen {
   constructor(options = {}) {
@@ -22,12 +22,12 @@ export class CustomersScreen {
     const stats = this.getCustomerStats();
 
     return `
-      <div class="min-h-screen flex flex-col bg-gray-50">
+      <div class="h-screen flex flex-col bg-neutral-50 overflow-hidden">
         ${Header({
-          left: '<button onclick="app.navigate(\'home\')" class="text-gray-600 hover:text-gray-900 text-xl">← Back</button>',
+          left: '<button onclick="app.navigate(\'home\')" class="text-neutral-600 hover:text-neutral-900 text-lg">← Back</button>',
           center: '<h1 class="text-xl font-bold">Customers</h1>',
           right:
-            '<button onclick="customersScreen.showAddCustomerForm()" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition shadow-sm">+ Add Customer</button>',
+            '<button onclick="customersScreen.showAddCustomerForm()" class="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90 transition-colors text-sm">+ Add Customer</button>',
         })}
 
         ${this.renderStatsBar(stats, filteredCustomers.length)}
@@ -64,7 +64,7 @@ export class CustomersScreen {
         <div class="max-w-4xl mx-auto">
           <input
             type="text"
-            placeholder="🔍 Search by name, phone, or email..."
+            placeholder="Search by name, phone, or email..."
             value="${this.searchQuery}"
             oninput="customersScreen.updateSearchQuery(this.value)"
             class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-primary focus:outline-none transition"
@@ -80,7 +80,7 @@ export class CustomersScreen {
         <div class="flex-1 overflow-y-auto p-6">
           <div class="max-w-4xl mx-auto" data-customer-list>
             <div class="text-center text-gray-400 py-20">
-              <div class="text-7xl mb-4">👥</div>
+              <div class="text-7xl mb-4">�</div>
               <div class="text-xl font-medium">No customers found</div>
               <div class="text-sm mt-2">${
                 this.searchQuery
@@ -106,7 +106,7 @@ export class CustomersScreen {
 
   renderContactInfo(customer) {
     const phone = customer.phone
-      ? `<div class="flex items-center gap-2 text-sm text-gray-600"><span class="text-gray-400">📞</span><span>${customer.phone}</span></div>`
+      ? `<div class="flex items-center gap-2 text-sm text-gray-600"><span class="text-gray-400">Phone:</span><span>${customer.phone}</span></div>`
       : '';
     const email = customer.email
       ? `<div class="flex items-center gap-2 text-sm text-gray-600"><span class="text-gray-400">✉️</span><span class="truncate">${customer.email}</span></div>`
@@ -127,9 +127,9 @@ export class CustomersScreen {
   }
 
   renderCustomerCard(customer) {
-    const orderCount = store.state.orders.filter(
-      (ord) => ord.customer?.id == customer.id
-    ).length;
+    const orderCount = store
+      .getState()
+      .orders.filter((ord) => ord.customer?.id === customer.id).length;
     const orderLabel =
       orderCount > 0
         ? `<div class="text-xs text-gray-500 mt-0.5">${orderCount} order${orderCount !== 1 ? 's' : ''}</div>`
@@ -158,20 +158,22 @@ export class CustomersScreen {
     const query = this.searchQuery.toLowerCase();
 
     if (!query) {
-      return store.state.customers;
+      return store.getState().customers;
     }
 
-    return store.state.customers.filter(
-      (cust) =>
-        cust.name.toLowerCase().includes(query) ||
-        cust.phone.includes(query) ||
-        cust.email.toLowerCase().includes(query)
-    );
+    return store
+      .getState()
+      .customers.filter(
+        (cust) =>
+          cust.name.toLowerCase().includes(query) ||
+          cust.phone.includes(query) ||
+          cust.email.toLowerCase().includes(query)
+      );
   }
 
   getCustomerStats() {
-    const customers = store.state.customers;
-    const orders = store.state.orders;
+    const customers = store.getState().customers;
+    const orders = store.getState().orders;
 
     const customersWithOrders = new Set(
       orders.filter((ord) => ord.customer?.id).map((ord) => ord.customer.id)
@@ -194,7 +196,9 @@ export class CustomersScreen {
   }
 
   editCustomer(customerId) {
-    this.editing = store.state.customers.find((cust) => cust.id == customerId);
+    this.editing = store
+      .getState()
+      .customers.find((cust) => cust.id === customerId);
     if (this.editing) {
       this.showCustomerModal();
     }
@@ -231,6 +235,7 @@ export class CustomersScreen {
   handleSaveCustomer(isEdit) {
     const form = document.getElementById('customer-form');
     if (!form) {
+      console.error('Customer form not found');
       return;
     }
 
@@ -239,40 +244,49 @@ export class CustomersScreen {
     const phone = formData.get('phone');
     const email = formData.get('email');
 
+    console.log('Saving customer:', { name, phone, email, isEdit });
+
     if (!name) {
       toast('Please enter a name', 'error');
       return;
     }
 
-    if (isEdit && this.editing) {
-      const result = updateCustomer(this.editing.id, { name, phone, email });
-      if (result) {
-        toast('Customer updated', 'success');
+    try {
+      if (isEdit && this.editing) {
+        console.log('Updating customer:', this.editing.id);
+        const result = updateCustomer(this.editing.id, { name, phone, email });
+        if (result.success) {
+          toast('Customer updated', 'success');
+        } else {
+          toast(result.error || 'Failed to update customer', 'error');
+          return;
+        }
       } else {
-        toast('Failed to update customer', 'error');
-        return;
+        console.log('Adding new customer');
+        const result = addCustomer(name, phone, email);
+        if (result.success) {
+          toast('Customer added', 'success');
+        } else {
+          toast(result.error || 'Failed to add customer', 'error');
+          return;
+        }
       }
-    } else {
-      const result = addCustomer(name, phone, email);
-      if (result) {
-        toast('Customer added', 'success');
-      } else {
-        toast('Failed to add customer. Phone may already exist.', 'error');
-        return;
-      }
-    }
 
-    this.editing = null;
-    this.updateCustomerList();
+      this.editing = null;
+      console.log('Calling updateCustomerList()');
+      this.updateCustomerList();
+      console.log('Customer list updated');
+    } catch (error) {
+      console.error('Error saving customer:', error);
+      toast(error.message || 'Failed to save customer', 'error');
+    }
   }
 
   async handleDelete(customerId) {
-    const customer = store.state.customers.find(
-      (cust) => cust.id == customerId
-    );
-    if (!customer) {
-      return;
-    }
+    const customer = store
+      .getState()
+      .customers.find((cust) => cust.id === customerId);
+    if (!customer) return;
 
     const confirmed = await confirm({
       title: 'Delete Customer',
@@ -297,6 +311,10 @@ export class CustomersScreen {
     const listEl = document.querySelector('[data-customer-list]');
 
     if (listEl) {
+      // Save scroll position
+      const scrollContainer = listEl.parentElement;
+      const scrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
+
       if (customers.length === 0) {
         listEl.innerHTML = `
           <div class="text-center text-gray-400 py-20">
@@ -316,6 +334,11 @@ export class CustomersScreen {
           </div>
         `;
       }
+
+      // Restore scroll position
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollTop;
+      }
     }
 
     // Update stats
@@ -325,13 +348,13 @@ export class CustomersScreen {
     }
   }
 
-  // Expose this screen instance globally for onclick handlers
+  // Router already exposes screen instance globally
   mount() {
-    window.customersScreen = this;
+    // No setup needed
   }
 
   unmount() {
-    delete window.customersScreen;
+    // No cleanup needed
   }
 }
 

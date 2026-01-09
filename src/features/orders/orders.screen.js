@@ -1,15 +1,16 @@
 // Orders Screen - View and manage orders
 
+import { imageService } from '../../services/image-service.js';
 import {
-  store,
-  updateOrder,
   deleteOrder,
   markOrderPaid,
-} from '../../data/store.js';
+  store,
+  updateOrder,
+} from '../../state/index.js';
 import { StatusBadge } from '../../ui/badge.js';
 import { updateText } from '../../ui/dom-utils.js';
 import { Header } from '../../ui/header.js';
-import { confirm, toast, createModal } from '../../ui/modal.js';
+import { confirm, createModal, toast } from '../../ui/modal.js';
 import { formatCurrency, formatDate } from '../../utils/helpers.js';
 
 export class OrdersScreen {
@@ -25,14 +26,14 @@ export class OrdersScreen {
     const stats = this.calculateStats(filteredOrders);
 
     return `
-      <div class="min-h-screen flex flex-col bg-gray-50">
+      <div class="h-screen flex flex-col bg-neutral-50 overflow-hidden">
         ${Header({
-          left: '<button onclick="app.navigate(\'home\')" class="text-gray-600 hover:text-gray-900 text-xl">← Back</button>',
+          left: '<button onclick="app.navigate(\'home\')" class="text-neutral-600 hover:text-neutral-900 text-lg">← Back</button>',
           center: '<h1 class="text-xl font-bold">Orders</h1>',
-          right: '<span class="text-sm">Connected</span>',
+          right: '',
         })}
 
-        <div class="flex-1 overflow-y-auto p-4 md:p-6">
+        <div class="flex-1 overflow-y-auto p-4 md:p-6" style="min-height: 0;">
           <div class="max-w-6xl mx-auto">
             ${this.renderStatsCards(stats)}
             ${this.renderFilters()}
@@ -45,22 +46,22 @@ export class OrdersScreen {
 
   renderStatsCards(stats) {
     return `
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6" data-order-stats>
-        <div class="bg-white rounded-xl p-4 border border-gray-200">
-          <div class="text-2xl font-bold text-gray-900" data-stat-total>${stats.total}</div>
-          <div class="text-sm text-gray-500">Total Orders</div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4" data-order-stats>
+        <div class="bg-white rounded p-4 border border-neutral-200">
+          <div class="text-2xl font-bold text-neutral-900" data-stat-total>${stats.total}</div>
+          <div class="text-xs text-neutral-500">Total Orders</div>
         </div>
-        <div class="bg-white rounded-xl p-4 border border-gray-200">
-          <div class="text-2xl font-bold text-green-600" data-stat-revenue>${formatCurrency(stats.revenue)}</div>
-          <div class="text-sm text-gray-500">Revenue</div>
+        <div class="bg-white rounded p-4 border border-neutral-200">
+          <div class="text-2xl font-bold text-success" data-stat-revenue>${formatCurrency(stats.revenue)}</div>
+          <div class="text-xs text-neutral-500">Revenue</div>
         </div>
-        <div class="bg-white rounded-xl p-4 border border-gray-200">
-          <div class="text-2xl font-bold text-blue-600" data-stat-preparing>${stats.preparing}</div>
-          <div class="text-sm text-gray-500">Preparing</div>
+        <div class="bg-white rounded p-4 border border-neutral-200">
+          <div class="text-2xl font-bold text-primary" data-stat-preparing>${stats.preparing}</div>
+          <div class="text-xs text-neutral-500">Preparing</div>
         </div>
-        <div class="bg-white rounded-xl p-4 border border-gray-200">
-          <div class="text-2xl font-bold text-orange-600" data-stat-unpaid>${stats.unpaid}</div>
-          <div class="text-sm text-gray-500">Unpaid</div>
+        <div class="bg-white rounded p-4 border border-neutral-200">
+          <div class="text-2xl font-bold text-danger" data-stat-unpaid>${stats.unpaid}</div>
+          <div class="text-xs text-neutral-500">Unpaid</div>
         </div>
       </div>
     `;
@@ -90,7 +91,7 @@ export class OrdersScreen {
           <div class="flex-1">
             <input
               type="text"
-              placeholder="🔍 Search by order # or customer..."
+              placeholder="Search by order # or customer..."
               value="${this.searchQuery}"
               oninput="ordersScreen.updateSearchQuery(this.value)"
               class="w-full border-2 border-gray-200 rounded-lg px-4 py-2.5 focus:border-primary focus:outline-none"
@@ -116,7 +117,7 @@ export class OrdersScreen {
     if (orders.length === 0) {
       return `
         <div class="text-center text-gray-400 py-20">
-          <div class="text-7xl mb-4">📋</div>
+          <div class="text-7xl mb-4">📄</div>
           <div class="text-xl font-medium">No orders found</div>
           <div class="text-sm mt-2">Try adjusting your filters</div>
         </div>
@@ -131,19 +132,20 @@ export class OrdersScreen {
   }
 
   renderOrderActions(order) {
-    const completeBtn =
-      order.status !== 'completed'
-        ? `<button onclick="ordersScreen.updateStatus('${order.id}', 'completed')" class="px-3 py-1.5 bg-green-50 text-green-600 rounded-lg text-sm font-medium hover:bg-green-100">✓ Complete</button>`
-        : '';
-    const paidBtn =
-      order.paymentStatus === 'unpaid'
-        ? `<button onclick="ordersScreen.handleMarkPaid('${order.id}')" class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100">💰 Mark Paid</button>`
-        : '';
     return `
       <div class="flex flex-wrap gap-2">
-        ${completeBtn}${paidBtn}
-        <button onclick="ordersScreen.viewDetails('${order.id}')" class="px-3 py-1.5 bg-gray-50 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-100">👁 View</button>
-        <button onclick="ordersScreen.handleDelete('${order.id}')" class="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100">🗑 Delete</button>
+        <select 
+          onchange="ordersScreen.updateStatus('${order.id}', this.value)" 
+          class="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-100 cursor-pointer"
+        >
+          <option value="" disabled selected>Change Status</option>
+          <option value="preparing" ${order.status === 'preparing' ? 'disabled' : ''}>Preparing</option>
+          <option value="completed" ${order.status === 'completed' ? 'disabled' : ''}>Completed</option>
+          <option value="cancelled" ${order.status === 'cancelled' ? 'disabled' : ''}>Cancelled</option>
+        </select>
+        ${order.paymentStatus === 'unpaid' ? `<button onclick="ordersScreen.handleMarkPaid('${order.id}')" class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100">Mark Paid</button>` : ''}
+        <button onclick="ordersScreen.viewDetails('${order.id}')" class="px-3 py-1.5 bg-gray-50 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-100">View</button>
+        <button onclick="ordersScreen.handleDelete('${order.id}')" class="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100">Delete</button>
       </div>
     `;
   }
@@ -174,7 +176,7 @@ export class OrdersScreen {
   }
 
   getFilteredOrders() {
-    let orders = [...store.state.orders];
+    let orders = [...store.getState().orders];
 
     // Filter by tab
     if (this.tab === 'today') {
@@ -234,20 +236,26 @@ export class OrdersScreen {
   }
 
   updateStatus(orderId, status) {
+    if (!status) return;
     updateOrder(orderId, { status });
-    toast(`Order #${orderId} marked as ${status}`, 'success');
+    toast(`Order marked as ${status}`, 'success');
     this.updateOrderList();
   }
 
   async handleMarkPaid(orderId) {
-    const order = store.state.orders.find((ord) => ord.id == orderId);
+    const order = store.getState().orders.find((ord) => ord.id === orderId);
     if (!order) {
+      toast('Order not found', 'error');
       return;
     }
 
-    markOrderPaid(orderId, order.total);
-    toast(`Order #${orderId} marked as paid`, 'success');
-    this.updateOrderList();
+    const result = markOrderPaid(orderId, order.total);
+    if (result.success) {
+      toast(`Order #${orderId} marked as paid`, 'success');
+      this.updateOrderList();
+    } else {
+      toast(result.error || 'Failed to mark order as paid', 'error');
+    }
   }
 
   async handleDelete(orderId) {
@@ -259,27 +267,46 @@ export class OrdersScreen {
     });
 
     if (confirmed) {
-      deleteOrder(orderId);
-      toast(`Order #${orderId} deleted`, 'info');
-      this.updateOrderList();
+      const result = deleteOrder(orderId);
+      if (result.success) {
+        toast(`Order #${orderId} deleted`, 'info');
+        this.updateOrderList();
+      } else {
+        toast(result.error || 'Failed to delete order', 'error');
+      }
     }
   }
 
   viewDetails(orderId) {
-    const order = store.state.orders.find((ord) => ord.id == orderId);
+    const order = store.getState().orders.find((ord) => ord.id === orderId);
     if (!order) {
+      toast('Order not found', 'error');
       return;
     }
 
     const itemsHtml = order.items
-      .map(
-        (item) => `
-      <div class="flex justify-between py-2 border-b last:border-0">
-        <span>${item.quantity}x ${item.name}</span>
+      .map((item) => {
+        const { src, fallback } = imageService.getImageWithFallback(
+          item.image,
+          'default'
+        );
+        return `
+      <div class="flex items-center gap-3 py-3 border-b last:border-0">
+        <img 
+          src="${src}" 
+          alt="${item.name}"
+          class="w-12 h-12 object-cover rounded-lg"
+          onerror="this.src='${fallback}'"
+          loading="lazy"
+        />
+        <div class="flex-1">
+          <div class="font-medium">${item.name}</div>
+          <div class="text-sm text-gray-500">Qty: ${item.quantity}</div>
+        </div>
         <span class="font-semibold">${formatCurrency(item.price * item.quantity)}</span>
       </div>
-    `
-      )
+    `;
+      })
       .join('');
 
     const modalHtml = `
@@ -319,6 +346,10 @@ export class OrdersScreen {
     const listEl = document.querySelector('[data-orders-list]');
 
     if (listEl) {
+      // Save scroll position
+      const scrollContainer = listEl.parentElement;
+      const scrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
+
       listEl.innerHTML =
         filteredOrders.length === 0
           ? `
@@ -329,6 +360,11 @@ export class OrdersScreen {
         </div>
       `
           : filteredOrders.map((order) => this.renderOrderCard(order)).join('');
+
+      // Restore scroll position
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollTop;
+      }
     }
 
     this.updateStats();
@@ -367,11 +403,11 @@ export class OrdersScreen {
   }
 
   mount() {
-    window.ordersScreen = this;
+    // Screen is already exposed by router
   }
 
   unmount() {
-    delete window.ordersScreen;
+    // Cleanup handled by router
   }
 }
 

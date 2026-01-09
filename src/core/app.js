@@ -18,10 +18,7 @@ class App {
 
   init() {
     this.root = document.getElementById('app');
-    if (!this.root) {
-      console.error('Root element #app not found');
-      return;
-    }
+    if (!this.root) return;
 
     // Map routes to screen classes
     this.router = createRouter({

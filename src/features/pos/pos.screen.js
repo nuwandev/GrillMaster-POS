@@ -1,19 +1,21 @@
 // POS screen: products, cart, and checkout UI (concise comments only)
 import { DEFAULT_TAX_RATE } from '../../core/constants.js';
+import { imageService } from '../../services/image-service.js';
 import {
-  store,
   addToCart,
-  removeFromCart,
-  updateCartQuantity,
   clearCart,
-  getCartTotal,
   getCartCount,
+  getCartTotal,
+  getCategories,
   placeOrder,
-} from '../../data/store.js';
+  removeFromCart,
+  store,
+  updateCartQuantity,
+} from '../../state/index.js';
 import { updateSection } from '../../ui/dom-utils.js';
-import { Header } from '../../ui/header.js';
 import { confirm, toast } from '../../ui/modal.js';
-import { formatCurrency, getCategories } from '../../utils/helpers.js';
+import { formatCurrency } from '../../utils/helpers.js';
+import { logger } from '../../utils/logger.js';
 
 const QUICK_CASH_VALUES = [1000, 2000, 5000, 10000];
 const PERCENT_VALUES = [5, 10, 15, 20];
@@ -36,51 +38,51 @@ export class POSScreen {
   }
 
   render() {
-    const categories = ['All', ...getCategories(store.state.products)];
+    const categories = ['All', ...getCategories()];
     const filteredProducts = this.getFilteredProducts();
-    const currentCustomer = store.state.currentCustomer?.name || 'Guest';
+    const currentCustomer = store.getState().currentCustomer?.name || 'Guest';
 
     return `
-      <div class="h-screen flex flex-col bg-gray-50">
-        ${this.renderHeader(currentCustomer)}
-
-        <div class="flex-1 flex min-h-0">
-          <!-- Products Section -->
-          <div class="flex-1 flex flex-col min-w-0">
-            ${this.renderCategoryTabs(categories)}
-            ${this.renderProductGrid(filteredProducts)}
+      <div class="w-full h-screen flex flex-col md:flex-row bg-neutral-100 overflow-hidden">
+        <!-- Products Section - Fixed Height -->
+        <div class="flex flex-col min-w-0" style="flex: 1 1 0%; min-height: 0;">
+          <!-- Top Bar - Fixed Height -->
+          <div class="h-14 shrink-0 w-full bg-white border-b border-neutral-200 px-4 flex items-center justify-between">
+            <button onclick="app.navigate('home')" tabindex="1" class="shrink-0 w-12 h-12 flex items-center justify-center text-neutral-600 hover:bg-neutral-100 rounded transition-colors" aria-label="Back to home">
+              <span class="text-2xl leading-none">←</span>
+            </button>
+            <div class="flex items-center gap-2 bg-neutral-100 px-4 py-2 rounded">
+              <svg class="w-5 h-5 text-primary shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
+              <span class="text-neutral-900 font-medium truncate">${currentCustomer}</span>
+            </div>
           </div>
-
-          <!-- Cart Section -->
-          ${this.renderCartSection()}
+          
+          ${this.renderCategoryTabs(categories)}
+          ${this.renderProductGrid(filteredProducts)}
         </div>
+
+        <!-- Cart Sidebar - Fixed Width -->
+        ${this.renderCartSection()}
 
         ${this.showSuccess ? this.renderSuccessModal() : ''}
       </div>
     `;
   }
 
-  renderHeader(customerName) {
-    return Header({
-      left: '<button onclick="app.navigate(\'home\')" class="text-gray-600 hover:text-gray-900 text-xl">✕</button>',
-      center: '<h1 class="text-xl font-bold">POS Screen</h1>',
-      right: `<span class="text-sm">Customer: <strong class="text-primary">${customerName}</strong></span>`,
-    });
-  }
-
   renderCategoryTabs(categories) {
     return `
-      <div class="bg-white border-b px-6 py-3 overflow-x-auto" data-category-tabs>
-        <div class="flex gap-2">
+      <div class="h-14 shrink-0 w-full bg-white border-b border-neutral-200 px-4 flex items-center" data-category-tabs>
+        <div class="flex gap-2 overflow-x-auto scrollbar-hide">
           ${categories
             .map(
-              (cat) => `
+              (cat, index) => `
             <button 
               onclick="posScreen.selectCategory('${cat}')"
-              class="px-5 py-2.5 rounded-lg whitespace-nowrap font-medium shadow-sm transition-all ${
+              tabindex="${index + 2}"
+              class="shrink-0 h-10 px-5 rounded font-medium text-sm whitespace-nowrap transition-colors ${
                 this.selectedCategory === cat
-                  ? 'bg-primary text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-primary text-white'
+                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
               }"
             >
               ${cat}
@@ -95,26 +97,35 @@ export class POSScreen {
 
   renderProductGrid(products) {
     return `
-      <div class="flex-1 overflow-y-auto p-6" data-products-scroll>
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" data-products-grid>
+      <div class="overflow-y-auto p-4" style="flex: 1 1 0%; min-height: 0;" data-products-scroll>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3" data-products-grid>
           ${products
-            .map(
-              (product) => `
-            <div 
-              class="bg-white rounded-xl shadow-sm hover:shadow-lg cursor-pointer border border-gray-200 hover:border-primary/30 hover-lift animate-press" 
+            .map((product) => {
+              const imageData = imageService.getImageWithFallback(
+                product.image,
+                product.category
+              );
+              return `
+            <button 
+              class="min-h-40 bg-white rounded border border-neutral-200 hover:border-primary cursor-pointer transition-colors overflow-hidden text-left" 
               onclick="posScreen.handleAddToCart('${product.id}')"
             >
-              <div class="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-t-xl flex items-center justify-center text-6xl">
-                ${product.image || '🍽️'}
+              <div class="aspect-square bg-neutral-50 overflow-hidden">
+                <img 
+                  src="${imageData.src}" 
+                  alt="${product.name}"
+                  class="w-full h-full object-cover"
+                  onerror="this.src='${imageData.fallback}'"
+                  loading="lazy"
+                />
               </div>
-              <div class="p-4">
-                <div class="font-semibold text-gray-900 mb-1 line-clamp-1">${product.name}</div>
-                <div class="text-sm text-gray-500 mb-2">${product.category}</div>
-                <div class="text-lg font-bold text-primary">${formatCurrency(product.price)}</div>
+              <div class="p-3">
+                <div class="font-medium text-neutral-900 mb-2 line-clamp-2 text-sm leading-snug min-h-10">${product.name}</div>
+                <div class="text-lg font-bold text-neutral-900">${formatCurrency(product.price)}</div>
               </div>
-            </div>
-          `
-            )
+            </button>
+          `;
+            })
             .join('')}
         </div>
       </div>
@@ -122,23 +133,28 @@ export class POSScreen {
   }
 
   renderCartSection() {
-    const cart = store.state.cart;
+    const cart = store.getState().cart;
     const total = getCartTotal();
     const count = getCartCount();
+    const canUndo = store.getState().actionHistory?.length > 0;
+    const lastAction = store.getState().lastAction;
 
     return `
-      <div data-cart-section class="w-96 bg-white border-l flex flex-col shrink-0">
-        <div class="px-6 py-4 border-b">
-          <h2 class="text-xl font-bold">Current Order</h2>
-          <div class="text-sm text-gray-500">${count} items</div>
+      <div data-cart-section class="w-full md:w-96 shrink-0 bg-white border-l border-neutral-200 flex flex-col" style="max-width: 24rem;">
+        <!-- Cart Header - Fixed Height -->
+        <div class="h-14 shrink-0 px-4 border-b border-neutral-200 bg-primary flex items-center justify-between">
+          <h2 class="text-lg font-bold text-white">Order</h2>
+          <div class="text-sm text-white/90">${count} items</div>
         </div>
 
-        <div class="flex-1 overflow-y-auto px-6 py-4" data-cart-scroll>
+        <!-- Cart Items - Scrollable Fixed Height -->
+        <div class="overflow-y-auto px-4 py-3" style="flex: 1 1 0%; min-height: 0;" data-cart-scroll>
           ${cart.length === 0 ? this.renderEmptyCart() : this.renderCartItems(cart)}
         </div>
 
-        <div class="border-t px-6 py-4 bg-gray-50">
-          ${this.renderCartFooter(total, cart.length > 0)}
+        <!-- Sticky Total & Actions - Fixed Height -->
+        <div class="shrink-0 border-t border-neutral-200 bg-neutral-50">
+          ${this.renderCartFooter(total, cart.length > 0, canUndo, lastAction)}
         </div>
       </div>
     `;
@@ -146,10 +162,10 @@ export class POSScreen {
 
   renderEmptyCart() {
     return `
-      <div class="text-center text-gray-400 mt-12">
-        <div class="text-6xl mb-4">🛒</div>
-        <div class="text-lg">Cart is empty</div>
-        <div class="text-sm mt-1">Add items to start</div>
+      <div class="flex flex-col items-center justify-center py-12 text-center">
+        <svg class="w-12 h-12 text-neutral-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        <div class="text-base font-medium text-neutral-600">Cart Empty</div>
+        <div class="text-sm text-neutral-500 mt-1">Add products to start</div>
       </div>
     `;
   }
@@ -158,34 +174,40 @@ export class POSScreen {
     return cart
       .map(
         (item) => `
-        <div class="mb-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
-          <div class="flex items-start justify-between mb-3">
+        <div class="mb-2 p-3 bg-neutral-50 rounded border border-neutral-200">
+          <div class="flex items-start justify-between mb-2">
             <div class="flex-1 min-w-0">
-              <div class="font-semibold text-gray-900">${item.name}</div>
-              <div class="text-sm text-gray-500">${formatCurrency(item.price)} each</div>
+              <div class="font-medium text-neutral-900 text-sm mb-1 truncate">${item.name}</div>
+              <div class="text-xs text-neutral-500">${formatCurrency(item.price)} each</div>
             </div>
             <button 
               onclick="posScreen.handleRemoveFromCart('${item.id}')"
-              class="ml-2 text-red-500 hover:text-red-700 text-xl hover:bg-red-50 rounded-lg w-8 h-8 flex items-center justify-center"
+              class="ml-2 shrink-0 w-8 h-8 flex items-center justify-center text-neutral-400 hover:text-danger hover:bg-danger/10 rounded transition-colors"
+              aria-label="Remove ${item.name}"
             >
-              ✕
+              <span class="text-lg leading-none">×</span>
             </button>
           </div>
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
             <button 
               onclick="posScreen.handleUpdateQuantity('${item.id}', ${item.quantity - 1})"
-              class="w-10 h-10 bg-white hover:bg-gray-100 rounded-lg font-bold border border-gray-200"
+              ${item.quantity <= 1 ? 'disabled' : ''}
+              class="w-12 h-12 flex items-center justify-center bg-white border border-neutral-300 rounded hover:bg-neutral-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white"
+              aria-label="Decrease quantity"
             >
-              −
+              <span class="text-lg leading-none font-medium">−</span>
             </button>
-            <span class="w-12 text-center font-semibold text-lg">${item.quantity}</span>
+            <div class="flex-1 text-center">
+              <div class="font-bold text-xl text-neutral-900">${item.quantity}</div>
+            </div>
             <button 
               onclick="posScreen.handleUpdateQuantity('${item.id}', ${item.quantity + 1})"
-              class="w-10 h-10 bg-white hover:bg-gray-100 rounded-lg font-bold border border-gray-200"
+              class="w-12 h-12 flex items-center justify-center bg-white border border-neutral-300 rounded hover:bg-neutral-100 transition-colors"
+              aria-label="Increase quantity"
             >
-              +
+              <span class="text-lg leading-none font-medium">+</span>
             </button>
-            <div class="flex-1 text-right font-bold text-gray-900">
+            <div class="text-right font-bold text-base text-neutral-900 min-w-[90px] px-3 py-3 bg-white rounded border border-neutral-200">
               ${formatCurrency(item.price * item.quantity)}
             </div>
           </div>
@@ -195,83 +217,128 @@ export class POSScreen {
       .join('');
   }
 
-  renderCartFooter(total, hasItems) {
+  renderCartFooter(total, hasItems, canUndo, lastAction) {
+    const actionLabels = {
+      ADD_TO_CART: 'Added item',
+      REMOVE_FROM_CART: 'Removed item',
+      UPDATE_QUANTITY: 'Changed quantity',
+      CLEAR_CART: 'Cleared cart',
+    };
+    const undoLabel = actionLabels[lastAction] || 'Undo';
+
     return `
-      <div class="mb-4">
-        <div class="flex justify-between text-lg mb-2">
-          <span class="text-gray-600">Subtotal</span>
-          <span class="font-semibold">${formatCurrency(total)}</span>
+      <div class="p-4">
+        <!-- Sticky Total -->
+        <div class="mb-3 p-4 bg-neutral-100 rounded">
+          <div class="flex justify-between items-center">
+            <span class="text-sm font-medium text-neutral-600">Total</span>
+            <div class="text-2xl font-bold text-neutral-900">
+              ${formatCurrency(total)}
+            </div>
+          </div>
         </div>
-        <div class="flex justify-between text-2xl font-bold">
-          <span>Total</span>
-          <span class="text-primary">${formatCurrency(total)}</span>
-        </div>
-      </div>
-      
-      ${
-        hasItems
-          ? `
+        
+        ${
+          canUndo
+            ? `
+        <!-- Undo Button -->
+        <button 
+          onclick="posScreen.handleUndo()"
+          class="w-full h-12 mb-2 bg-neutral-100 text-neutral-700 font-medium rounded hover:bg-neutral-200 transition-colors"
+        >
+          ← ${undoLabel}
+        </button>
+        `
+            : ''
+        }
+        
+        ${
+          hasItems
+            ? `
+        <!-- Primary Action: Checkout -->
         <button 
           onclick="posScreen.checkout()"
-          class="w-full bg-success text-white text-xl font-bold py-4 rounded-xl hover:bg-green-600 active:scale-95 transition-all shadow-sm"
+          class="w-full h-14 bg-primary text-white text-base font-semibold rounded hover:bg-primary/90 transition-colors"
         >
-          Checkout
+          Checkout (Enter)
         </button>
+        <!-- Danger Action: Clear Cart -->
         <button 
           onclick="posScreen.handleClearCart()"
-          class="w-full mt-2 bg-white text-gray-700 py-3 rounded-xl hover:bg-gray-100 border border-gray-200"
+          class="w-full h-12 mt-2 bg-white text-danger font-medium rounded border border-neutral-300 hover:bg-danger/10 hover:border-danger transition-colors"
         >
           Clear Cart
         </button>
       `
-          : ''
-      }
+            : `
+        <!-- Empty State -->
+        <div class="text-center py-4 text-neutral-500 text-sm">
+          Add items to checkout
+        </div>
+      `
+        }
+      </div>
     `;
   }
 
+  renderSuccessModalDirectly() {
+    // Render success modal directly to DOM without full re-render
+    const existingModal = document.getElementById('success-modal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    const modalContainer = document.createElement('div');
+    modalContainer.id = 'success-modal';
+    modalContainer.innerHTML = this.renderSuccessModal();
+    document.body.appendChild(modalContainer);
+  }
+
   renderSuccessModal() {
-    const order = store.state.orders.find((ord) => ord.id == this.lastOrderId);
+    const order = store
+      .getState()
+      .orders.find((ord) => ord.id === this.lastOrderId);
     if (!order) {
       return '';
     }
 
     return `
-      <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-          <div class="text-center p-8 pb-6">
-            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <div class="text-4xl">✅</div>
+      <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
+          <div class="text-center p-6 pb-4">
+            <div class="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-3">
+              <div class="text-3xl">✅</div>
             </div>
-            <div class="text-2xl font-bold mb-2">Payment Successful</div>
-            <div class="text-gray-600">Order #${order.id} placed</div>
+            <div class="text-xl font-bold mb-1">Order Complete</div>
+            <div class="text-neutral-600 text-sm">Order #${order.id}</div>
           </div>
           
-          <div class="px-8 pb-8">
-            <div class="border rounded-xl p-5 mb-6 bg-gray-50">
-              <div class="flex justify-between mb-3 pb-3 border-b">
-                <span class="text-gray-600">Items</span>
+          <div class="px-6 pb-6">
+            <div class="border rounded p-4 mb-4 bg-neutral-50">
+              <div class="flex justify-between mb-2 pb-2 border-b border-neutral-200">
+                <span class="text-neutral-600 text-sm">Items</span>
                 <span class="font-semibold">${order.items.length}</span>
               </div>
-              <div class="flex justify-between mb-3">
-                <span class="text-gray-600">Total</span>
-                <span class="font-bold text-xl text-primary">${formatCurrency(order.total)}</span>
+              <div class="flex justify-between mb-2">
+                <span class="text-neutral-600 text-sm">Total</span>
+                <span class="font-bold text-xl text-neutral-900">${formatCurrency(order.total)}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-600">Payment</span>
-                <span class="font-semibold capitalize">${order.paymentMethod}</span>
+                <span class="text-neutral-600 text-sm">Payment</span>
+                <span class="font-semibold capitalize text-sm">${order.paymentMethod}</span>
               </div>
             </div>
             
             <div class="flex gap-3">
               <button 
                 onclick="posScreen.printReceipt('${order.id}')" 
-                class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl hover:bg-gray-200 font-semibold"
+                class="w-32 h-12 bg-neutral-100 text-neutral-700 rounded hover:bg-neutral-200 font-medium"
               >
-                Print Receipt
+                Print
               </button>
               <button 
                 onclick="posScreen.startNewOrder()" 
-                class="flex-1 bg-primary text-white py-3 rounded-xl hover:bg-blue-600 font-semibold shadow-sm"
+                class="flex-1 h-12 bg-primary text-white rounded hover:bg-primary/90 font-semibold"
               >
                 New Order
               </button>
@@ -284,11 +351,11 @@ export class POSScreen {
 
   getFilteredProducts() {
     if (this.selectedCategory === 'All') {
-      return store.state.products;
+      return store.getState().products;
     }
-    return store.state.products.filter(
-      (prod) => prod.category === this.selectedCategory
-    );
+    return store
+      .getState()
+      .products.filter((prod) => prod.category === this.selectedCategory);
   }
 
   selectCategory(category) {
@@ -298,10 +365,24 @@ export class POSScreen {
   }
 
   handleAddToCart(productId) {
-    const product = store.state.products.find((prod) => prod.id == productId);
-    if (product) {
-      addToCart(product);
-      this.updateCartSection();
+    try {
+      const product = store
+        .getState()
+        .products.find((prod) => prod.id === productId);
+      if (product) {
+        addToCart(product);
+        this.updateCartSection();
+        logger.debug('Product added to cart', {
+          productId,
+          name: product.name,
+        });
+      }
+    } catch (error) {
+      logger.error('Failed to add product to cart', {
+        productId,
+        error: error.message,
+      });
+      toast('Failed to add product to cart', 'error');
     }
   }
 
@@ -330,6 +411,16 @@ export class POSScreen {
       clearCart();
       toast('Cart cleared', 'info');
       this.updateCartSection();
+    }
+  }
+
+  handleUndo() {
+    const result = undoLastAction();
+    if (result.success) {
+      toast(`Undone: ${result.message}`, 'info');
+      this.updateCartSection();
+    } else {
+      toast('Nothing to undo', 'warning');
     }
   }
 
@@ -370,7 +461,7 @@ export class POSScreen {
     const amountDue = Math.max(0, grandTotal - received);
     const canConfirm = this.paymentMethod !== 'cash' || received >= grandTotal;
 
-    modal.innerHTML = this.getCheckoutModalHTML(
+    modal.innerHTML = this.getCheckoutModalHTML({
       subtotal,
       discountAmt,
       taxAmt,
@@ -378,12 +469,12 @@ export class POSScreen {
       received,
       changeDue,
       amountDue,
-      canConfirm
-    );
+      canConfirm,
+    });
   }
 
   renderOrderSummary() {
-    const cart = store.state.cart;
+    const cart = store.getState().cart;
     const items = cart
       .map(
         (item) =>
@@ -391,42 +482,42 @@ export class POSScreen {
       )
       .join('');
     return `
-      <div class="border-2 rounded-xl p-5 bg-gray-50">
-        <div class="flex items-center justify-between mb-4"><span class="font-semibold text-gray-700">Order Summary</span><span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-semibold">${getCartCount()} Items</span></div>
-        <div class="divide-y max-h-40 overflow-auto bg-white rounded-lg border">${items}</div>
+      <div class="border rounded p-4 bg-neutral-50">
+        <div class="flex items-center justify-between mb-3"><span class="font-semibold text-neutral-900">Order Summary</span><span class="bg-neutral-200 text-neutral-700 px-2 py-1 rounded text-sm font-medium">${getCartCount()} Items</span></div>
+        <div class="divide-y max-h-40 overflow-auto bg-white rounded border border-neutral-200">${items}</div>
       </div>
     `;
   }
 
   renderCheckoutFooter(canConfirm) {
     const btnClass = canConfirm
-      ? 'bg-success hover:bg-green-600 text-white shadow-sm cursor-pointer'
-      : 'bg-gray-300 text-gray-500 cursor-not-allowed';
-    const btnText = canConfirm ? 'Confirm Payment' : 'Complete Payment Info';
+      ? 'bg-primary hover:bg-primary/90 text-white cursor-pointer'
+      : 'bg-neutral-300 text-neutral-500 cursor-not-allowed';
+    const btnText = canConfirm ? 'Confirm (Enter)' : 'Enter Amount';
     return `
-      <div class="px-6 py-5 border-t bg-gray-50 flex gap-3">
-        <button onclick="posScreen.cancelCheckout()" class="flex-1 bg-white border-2 border-gray-200 text-gray-700 py-4 rounded-xl font-semibold hover:bg-gray-100">Cancel</button>
-        <button onclick="posScreen.confirmPayment()" ${canConfirm ? '' : 'disabled'} class="flex-1 py-4 rounded-xl font-semibold transition-all ${btnClass}">${btnText}</button>
+      <div class="px-6 py-4 border-t bg-neutral-50 flex gap-3">
+        <button onclick="posScreen.cancelCheckout()" class="w-32 h-14 bg-white border border-neutral-300 text-neutral-700 rounded font-medium hover:bg-neutral-50">Cancel</button>
+        <button onclick="posScreen.confirmPayment()" ${canConfirm ? '' : 'disabled'} class="flex-1 h-14 rounded font-semibold ${btnClass}">${btnText}</button>
       </div>
     `;
   }
 
-  getCheckoutModalHTML(
-    subtotal,
-    discountAmt,
-    taxAmt,
-    grandTotal,
-    received,
-    changeDue,
-    amountDue,
-    canConfirm
-  ) {
+  getCheckoutModalHTML(params) {
+    const {
+      subtotal,
+      discountAmt,
+      taxAmt,
+      grandTotal,
+      changeDue,
+      amountDue,
+      canConfirm,
+    } = params;
     return `
-      <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-backdrop" onclick="if(event.target === this) posScreen.cancelCheckout()">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-modal" onclick="event.stopPropagation()">
-          <div class="px-6 py-5 border-b flex items-center justify-between">
-            <div><div class="text-2xl font-bold">Checkout</div><div class="text-sm text-gray-500 mt-1">Review and complete payment</div></div>
-            <button onclick="posScreen.cancelCheckout()" class="text-gray-500 hover:text-gray-700 text-xl hover:bg-gray-100 rounded-lg w-10 h-10 flex items-center justify-center">✕</button>
+      <div class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onclick="if(event.target === this) posScreen.cancelCheckout()">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl overflow-hidden" onclick="event.stopPropagation()">
+          <div class="px-6 py-4 border-b flex items-center justify-between bg-neutral-50">
+            <div class="text-xl font-bold text-neutral-900">Checkout</div>
+            <button onclick="posScreen.cancelCheckout()" class="text-neutral-500 hover:text-neutral-700 text-xl w-10 h-10 flex items-center justify-center rounded hover:bg-neutral-100">✕</button>
           </div>
           <div class="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
             ${this.renderOrderSummary()}
@@ -446,16 +537,16 @@ export class POSScreen {
     const quickButtons = this.getQuickDiscountButtons();
 
     return `
-      <div class="border-2 rounded-xl p-5 h-full flex flex-col">
-        <div class="font-semibold text-gray-900 mb-4">Discount</div>
+      <div class="border rounded p-4 h-full flex flex-col bg-neutral-50">
+        <div class="font-semibold text-neutral-900 mb-3 text-sm">Discount</div>
         
-        <div class="flex gap-2 mb-4">
+        <div class="flex gap-2 mb-3">
           ${['none', 'percent', 'flat']
             .map(
               (t) => `
             <button 
               onclick="posScreen.setDiscountType('${t}')" 
-              class="flex-1 px-4 py-2.5 rounded-lg font-medium transition-all ${this.discountType === t ? 'bg-primary text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'}"
+              class="flex-1 px-3 py-2 rounded font-medium text-sm ${this.discountType === t ? 'bg-primary text-white' : 'bg-white text-neutral-700 hover:bg-neutral-100 border border-neutral-200'}"
             >
               ${this.getDiscountTypeLabel(t)}
             </button>
@@ -471,52 +562,52 @@ export class POSScreen {
           placeholder="${this.discountType === 'percent' ? 'e.g. 10 for 10%' : 'e.g. 100 for LKR 100'}"
           value="${this.discountValue}"
           oninput="posScreen.setDiscountValue(this.value)"
-          class="w-full px-4 py-3 border-2 rounded-lg transition-all ${this.discountType === 'none' ? 'bg-gray-100 border-gray-200 cursor-not-allowed' : 'border-gray-300 focus:border-primary'}" 
+          class="w-full px-3 py-2 border rounded text-sm ${this.discountType === 'none' ? 'bg-neutral-100 border-neutral-200 cursor-not-allowed' : 'border-neutral-300 focus:border-primary'}" 
         />
 
-        ${this.discountType !== 'none' ? `<div class="flex flex-wrap gap-2 mt-3">${quickButtons}</div>` : ''}
+        ${this.discountType === 'none' ? '' : `<div class="flex flex-wrap gap-2 mt-2">${quickButtons}</div>`}
       </div>
     `;
   }
 
   renderTaxCard(subtotal, discountAmt, taxAmt, grandTotal) {
     return `
-      <div class="border-2 rounded-xl p-5 h-full flex flex-col">
-        <div class="font-semibold text-gray-900 mb-4">Tax & Total</div>
+      <div class="border rounded p-4 h-full flex flex-col bg-neutral-50">
+        <div class="font-semibold text-neutral-900 mb-3 text-sm">Tax & Total</div>
 
-        <div class="mb-4">
-          <label class="text-sm text-gray-600 font-medium mb-2 block">Tax Rate (%)</label>
+        <div class="mb-3">
+          <label class="text-xs text-neutral-600 font-medium mb-1 block">Tax Rate (%)</label>
           <input 
             type="number" 
             min="0" 
             value="${this.taxRate}" 
             oninput="posScreen.setTaxRate(this.value)" 
-            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-primary transition-all" 
+            class="w-full px-3 py-2 border border-neutral-300 rounded focus:border-primary text-sm" 
           />
         </div>
 
-        <div class="space-y-3 p-4 bg-gray-50 rounded-lg border flex-1" data-tax-totals>
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-600">Subtotal</span>
+        <div class="space-y-2 p-3 bg-white rounded border flex-1 text-sm" data-tax-totals>
+          <div class="flex justify-between">
+            <span class="text-neutral-600">Subtotal</span>
             <span class="font-semibold">${formatCurrency(subtotal)}</span>
           </div>
           ${
             discountAmt > 0
               ? `
-            <div class="flex justify-between text-sm">
-              <span class="text-gray-600">Discount</span>
-              <span class="font-semibold text-green-600">-${formatCurrency(discountAmt)}</span>
+            <div class="flex justify-between">
+              <span class="text-neutral-600">Discount</span>
+              <span class="font-semibold text-success">-${formatCurrency(discountAmt)}</span>
             </div>
           `
               : ''
           }
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-600">Tax (${this.taxRate}%)</span>
+          <div class="flex justify-between">
+            <span class="text-neutral-600">Tax (${this.taxRate}%)</span>
             <span class="font-semibold">${formatCurrency(taxAmt)}</span>
           </div>
-          <div class="pt-3 border-t flex justify-between items-center">
-            <span class="text-lg font-bold">Total</span>
-            <span class="text-2xl font-bold text-primary">${formatCurrency(grandTotal)}</span>
+          <div class="pt-2 border-t flex justify-between items-center">
+            <span class="font-bold">Total</span>
+            <span class="text-xl font-bold text-neutral-900">${formatCurrency(grandTotal)}</span>
           </div>
         </div>
       </div>
@@ -552,19 +643,19 @@ export class POSScreen {
 
   renderPaymentMethodCard(grandTotal, amountDue, changeDue) {
     return `
-      <div class="border-2 rounded-xl p-5">
-        <div class="font-semibold text-gray-900 mb-4">Payment Method</div>
+      <div class="border rounded p-4 bg-neutral-50">
+        <div class="font-semibold text-neutral-900 mb-3 text-sm">Payment Method</div>
 
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+        <div class="grid grid-cols-4 gap-2 mb-4">
           ${['cash', 'card', 'digital', 'unpaid']
             .map(
               (m) => `
             <button 
               onclick="posScreen.setPaymentMethod('${m}')" 
-              class="px-4 py-4 rounded-lg border-2 font-medium transition-all ${this.paymentMethod === m ? 'bg-primary border-primary text-white' : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'}"
+              class="px-3 py-3 rounded border font-medium text-sm ${this.paymentMethod === m ? 'bg-primary border-primary text-white' : 'bg-white border-neutral-200 text-neutral-700 hover:border-neutral-300'}"
             >
-              <div class="text-2xl mb-1">${this.getPaymentMethodIcon(m)}</div>
-              <div class="text-sm capitalize">${m}</div>
+              <div class="text-xl mb-1">${this.getPaymentMethodIcon(m)}</div>
+              <div class="text-xs capitalize">${m}</div>
             </button>
           `
             )
@@ -575,9 +666,9 @@ export class POSScreen {
           this.paymentMethod === 'cash'
             ? this.renderCashPaymentSection(grandTotal, amountDue, changeDue)
             : `
-          <div class="bg-gray-50 border-2 rounded-lg p-6 text-center">
-            <div class="text-4xl mb-2">✓</div>
-            <div class="font-semibold text-gray-700">Ready to process</div>
+          <div class="bg-white border rounded p-4 text-center">
+            <div class="text-2xl mb-1">✓</div>
+            <div class="font-medium text-neutral-700 text-sm">Ready to process</div>
           </div>
         `
         }
@@ -592,30 +683,30 @@ export class POSScreen {
 
   renderCashPaymentSection(grandTotal, amountDue, changeDue) {
     const statusLabel = amountDue > 0 ? 'Amount Due' : 'Change';
-    const statusColor = amountDue > 0 ? 'text-red-600' : 'text-green-600';
+    const statusColor = amountDue > 0 ? 'text-danger' : 'text-success';
     const displayAmount = amountDue > 0 ? amountDue : changeDue;
 
     return `
-      <div class="bg-gray-50 border-2 rounded-lg p-5">
-        <div class="mb-4">
-          <label class="text-sm font-semibold text-gray-700 mb-2 block">Amount Received</label>
+      <div class="bg-white border rounded p-4">
+        <div class="mb-3">
+          <label class="text-xs font-semibold text-neutral-700 mb-1 block">Amount Received</label>
           <input 
             type="number" 
             min="0" 
             value="${this.amountReceived}" 
             oninput="posScreen.setAmountReceived(this.value)" 
-            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-lg font-semibold focus:border-primary" 
+            class="w-full px-3 py-2 border border-neutral-300 rounded font-semibold focus:border-primary" 
           />
         </div>
 
-        <div class="flex flex-wrap gap-2 mb-4">
-          <button onclick="posScreen.applyExact(${grandTotal})" class="px-4 py-2 text-sm font-medium bg-primary hover:bg-blue-600 text-white rounded-lg">Exact</button>
-          ${QUICK_CASH_VALUES.map((v) => `<button onclick="posScreen.applyQuickCash(${v})" class="px-4 py-2 text-sm font-medium bg-white hover:bg-gray-100 border-2 border-gray-200 rounded-lg">₨${v}</button>`).join('')}
+        <div class="flex flex-wrap gap-2 mb-3">
+          <button onclick="posScreen.applyExact(${grandTotal})" class="px-3 py-1.5 text-xs font-medium bg-primary hover:bg-primary/90 text-white rounded">Exact</button>
+          ${QUICK_CASH_VALUES.map((v) => `<button onclick="posScreen.applyQuickCash(${v})" class="px-3 py-1.5 text-xs font-medium bg-white hover:bg-neutral-100 border border-neutral-200 rounded">₨${v}</button>`).join('')}
         </div>
 
-        <div class="flex justify-between items-center pt-4 border-t-2">
-          <span class="text-lg font-semibold">${statusLabel}</span>
-          <span class="text-2xl font-bold ${statusColor}">${formatCurrency(displayAmount)}</span>
+        <div class="flex justify-between items-center pt-3 border-t">
+          <span class="font-semibold text-sm">${statusLabel}</span>
+          <span class="text-lg font-bold ${statusColor}">${formatCurrency(displayAmount)}</span>
         </div>
       </div>
     `;
@@ -631,7 +722,7 @@ export class POSScreen {
 
   setDiscountValue(value) {
     this.discountValue = Number(value) || 0;
-    this.updateCheckoutModal();
+    this.updateTotalsOnly(); // Avoids re-rendering the input to maintain focus
   }
 
   setTaxRate(rate) {
@@ -649,7 +740,7 @@ export class POSScreen {
 
   setAmountReceived(amount) {
     this.amountReceived = Number(amount) || 0;
-    this.updateCheckoutModal();
+    this.updateTotalsOnly(); // Avoids re-rendering the input to maintain focus
   }
 
   getDiscountTypeLabel(type) {
@@ -740,6 +831,47 @@ export class POSScreen {
     }
   }
 
+  // Update only the tax totals section to maintain input focus
+  updateTotalsOnly() {
+    if (!this.showCheckout) {
+      return;
+    }
+
+    const subtotal = getCartTotal();
+    const discountAmt = this.calculateDiscount(subtotal);
+    const subAfterDiscount = Math.max(0, subtotal - discountAmt);
+    const taxAmt = (subAfterDiscount * this.taxRate) / 100;
+    const grandTotal = Math.max(0, subAfterDiscount + taxAmt);
+    const received = Number(this.amountReceived) || 0;
+    const changeDue = Math.max(0, received - grandTotal);
+    const amountDue = Math.max(0, grandTotal - received);
+    const canConfirm = this.paymentMethod !== 'cash' || received >= grandTotal;
+
+    // Only update the totals display and footer
+    const taxTotals = document.querySelector('[data-tax-totals]');
+    const footer = document.querySelector('[data-checkout-footer]');
+    const paymentCard = document.querySelector('[data-payment-card]');
+
+    if (taxTotals) {
+      taxTotals.innerHTML = this.renderTaxTotals(
+        subtotal,
+        discountAmt,
+        taxAmt,
+        grandTotal
+      );
+    }
+    if (paymentCard) {
+      paymentCard.innerHTML = this.renderPaymentMethodCard(
+        grandTotal,
+        amountDue,
+        changeDue
+      );
+    }
+    if (footer) {
+      footer.innerHTML = this.renderCheckoutFooter(canConfirm);
+    }
+  }
+
   // Calculates discount: percentage of subtotal or capped flat amount
   calculateDiscount(subtotal) {
     if (this.discountType === 'percent') {
@@ -751,39 +883,51 @@ export class POSScreen {
   }
 
   confirmPayment() {
-    const subtotal = getCartTotal();
-    const discountAmt = this.calculateDiscount(subtotal);
-    const subAfterDiscount = Math.max(0, subtotal - discountAmt);
-    const taxAmt = (subAfterDiscount * this.taxRate) / 100;
-    const grandTotal = Math.max(0, subAfterDiscount + taxAmt);
+    try {
+      const subtotal = getCartTotal();
+      const discountAmt = this.calculateDiscount(subtotal);
+      const subAfterDiscount = Math.max(0, subtotal - discountAmt);
+      const taxAmt = (subAfterDiscount * this.taxRate) / 100;
+      const grandTotal = Math.max(0, subAfterDiscount + taxAmt);
 
-    if (this.paymentMethod === 'cash' && this.amountReceived < grandTotal) {
-      toast('Insufficient cash received', 'error');
-      return;
-    }
+      if (this.paymentMethod === 'cash' && this.amountReceived < grandTotal) {
+        toast('Insufficient cash received', 'error');
+        return;
+      }
 
-    const order = placeOrder(this.paymentMethod, {
-      subtotal,
-      discountType: this.discountType,
-      discountValue: discountAmt,
-      taxRate: this.taxRate,
-      taxAmount: taxAmt,
-      total: grandTotal,
-      paymentStatus: this.paymentMethod === 'unpaid' ? 'unpaid' : 'paid',
-      amountReceived: this.paymentMethod === 'cash' ? this.amountReceived : 0,
-      changeDue:
-        this.paymentMethod === 'cash'
-          ? Math.max(0, this.amountReceived - grandTotal)
-          : 0,
-    });
+      const result = placeOrder(this.paymentMethod, {
+        subtotal,
+        discountType: this.discountType,
+        discountValue: discountAmt,
+        taxRate: this.taxRate,
+        taxAmount: taxAmt,
+        total: grandTotal,
+        paymentStatus: this.paymentMethod === 'unpaid' ? 'unpaid' : 'paid',
+        amountReceived: this.paymentMethod === 'cash' ? this.amountReceived : 0,
+        changeDue:
+          this.paymentMethod === 'cash'
+            ? Math.max(0, this.amountReceived - grandTotal)
+            : 0,
+      });
 
-    if (order) {
-      this.lastOrderId = order.id;
-      this.showCheckout = false;
-      this.closeCheckoutModal();
-      this.showSuccess = true;
-      window.app.render();
-      toast('Order placed successfully!', 'success');
+      if (result.success) {
+        this.lastOrderId = result.order.id;
+        this.showCheckout = false;
+        this.closeCheckoutModal();
+        this.showSuccess = true;
+        this.renderSuccessModalDirectly();
+        logger.info('Order placed successfully', {
+          orderId: result.order.id,
+          total: grandTotal,
+        });
+        toast('Order placed successfully!', 'success');
+      } else {
+        toast(result.error || 'Failed to place order', 'error');
+        logger.error('Failed to place order', { error: result.error });
+      }
+    } catch (error) {
+      logger.error('Error placing order', { error: error.message });
+      toast(`Failed to place order: ${error.message}`, 'error');
     }
   }
 
@@ -797,12 +941,19 @@ export class POSScreen {
     this.amountReceived = 0;
     this.paymentMethod = 'cash';
     this.lastOrderId = null;
+
+    // Remove success modal
+    const successModal = document.getElementById('success-modal');
+    if (successModal) {
+      successModal.remove();
+    }
+
     clearCart();
-    window.app.navigate('new-order');
+    globalThis.app.navigate('new-order');
   }
 
   printReceipt(orderId) {
-    const order = store.state.orders.find((ord) => ord.id == orderId);
+    const order = store.getState().orders.find((ord) => ord.id === orderId);
     if (!order) {
       return;
     }
@@ -871,39 +1022,110 @@ export class POSScreen {
 
   renderProductGridContent(products) {
     return products
-      .map(
-        (product) => `
+      .map((product) => {
+        const imageData = imageService.getImageWithFallback(
+          product.image,
+          product.category
+        );
+        return `
         <div 
-          class="bg-white rounded-xl shadow-sm hover:shadow-lg cursor-pointer border border-gray-200 hover:border-primary/30 hover-lift animate-press" 
+          class="bg-white rounded-lg border border-gray-200 hover:border-primary cursor-pointer transition-colors overflow-hidden" 
           onclick="posScreen.handleAddToCart('${product.id}')"
         >
-          <div class="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-t-xl flex items-center justify-center text-6xl">
-            ${product.image || '🍽️'}
+          <div class="aspect-square bg-gray-50 overflow-hidden">
+            <img 
+              src="${imageData.src}" 
+              alt="${product.name}"
+              class="w-full h-full object-cover"
+              onerror="this.src='${imageData.fallback}'"
+              loading="lazy"
+            />
           </div>
-          <div class="p-4">
-            <div class="font-semibold text-gray-900 mb-1 line-clamp-1">${product.name}</div>
-            <div class="text-sm text-gray-500 mb-2">${product.category}</div>
+          <div class="p-3">
+            <div class="font-semibold text-gray-900 mb-2 line-clamp-2 text-sm leading-snug">${product.name}</div>
             <div class="text-lg font-bold text-primary">${formatCurrency(product.price)}</div>
           </div>
         </div>
-      `
-      )
+      `;
+      })
       .join('');
   }
 
   updateCategoryTabs() {
-    const categories = ['All', ...getCategories(store.state.products)];
+    const categories = ['All', ...getCategories()];
     updateSection('[data-category-tabs]', this.renderCategoryTabs(categories));
   }
 
   mount() {
-    window.posScreen = this;
+    globalThis.posScreen = this;
     clearCart();
+
+    // Keyboard navigation
+    this.keyboardHandler = (e) => {
+      // Ignore if user is typing in input/textarea
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        return;
+      }
+
+      const { cart } = getState();
+      const hasItems = cart.length > 0;
+
+      switch (e.key) {
+        case 'Enter':
+          if (this.showCheckout) {
+            // In checkout modal - confirm if ready
+            e.preventDefault();
+            const subtotal = getCartTotal();
+            const discountAmt = this.calculateDiscount(subtotal);
+            const subAfterDiscount = Math.max(0, subtotal - discountAmt);
+            const taxAmt = (subAfterDiscount * this.taxRate) / 100;
+            const grandTotal = Math.max(0, subAfterDiscount + taxAmt);
+            const received = Number(this.amountReceived) || 0;
+            const canConfirm =
+              this.paymentMethod !== 'cash' || received >= grandTotal;
+            if (canConfirm) {
+              this.confirmPayment();
+            }
+          } else if (hasItems) {
+            // Not in checkout - open checkout
+            e.preventDefault();
+            this.checkout();
+          }
+          break;
+        case 'Escape':
+          if (this.showCheckout) {
+            e.preventDefault();
+            this.closeCheckoutModal();
+          } else if (hasItems) {
+            e.preventDefault();
+            this.handleClearCart();
+          }
+          break;
+        case 'u':
+        case 'U':
+          e.preventDefault();
+          this.handleUndo();
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', this.keyboardHandler);
   }
 
   unmount() {
-    delete window.posScreen;
+    delete globalThis.posScreen;
     this.closeCheckoutModal();
+
+    // Remove keyboard handler
+    if (this.keyboardHandler) {
+      document.removeEventListener('keydown', this.keyboardHandler);
+    }
+
+    // Clean up success modal if exists
+    const successModal = document.getElementById('success-modal');
+    if (successModal) {
+      successModal.remove();
+    }
   }
 }
 

@@ -28,14 +28,23 @@ export function createRouter(config) {
     unmountScreen(currentScreen);
 
     const ScreenClass = routes[route] || routes[defaultRoute];
-    if (!ScreenClass) {
-      console.error(`Route not found: ${route}`);
-      return;
-    }
+    if (!ScreenClass) return;
 
     currentRoute = route;
     window.location.hash = route;
     currentScreen = new ScreenClass({ router: routerInstance, params });
+
+    // Expose screen instance globally for onclick handlers
+    // Map route to screen name: 'pos' -> 'posScreen', 'new-order' -> 'newOrderScreen'
+    const screenName =
+      route
+        .split('-')
+        .map((part, i) =>
+          i === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1)
+        )
+        .join('') + 'Screen';
+    window[screenName] = currentScreen;
+
     render();
     window.scrollTo(0, 0);
     mountScreen(currentScreen);
