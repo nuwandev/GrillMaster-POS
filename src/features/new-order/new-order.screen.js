@@ -327,10 +327,11 @@ export class NewOrderScreen {
 
   // Expose this screen instance globally for onclick handlers
   mount() {
-    // Screen is already exposed by router
+    globalThis.newOrderScreen = this;
   }
+  
   unmount() {
-    // Cleanup handled by router
+    delete globalThis.newOrderScreen;
   }
 }
 

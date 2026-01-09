@@ -1067,7 +1067,7 @@ export class POSScreen {
         return;
       }
 
-      const { cart } = getState();
+      const { cart } = store.getState();
       const hasItems = cart.length > 0;
 
       switch (e.key) {
