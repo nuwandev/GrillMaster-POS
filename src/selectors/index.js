@@ -81,26 +81,6 @@ export function getTopProducts(state, limit = 5) {
     .slice(0, limit);
 }
 
-// Get cart item by product ID
-export function getCartItem(state, productId) {
-  return state.cart.find((item) => item.id === productId);
-}
-
-// Get product by ID
-export function getProductById(state, productId) {
-  return state.products.find((product) => product.id === productId);
-}
-
-// Get order by ID
-export function getOrderById(state, orderId) {
-  return state.orders.find((order) => order.id === orderId);
-}
-
-// Get customer by ID
-export function getCustomerById(state, customerId) {
-  return state.customers.find((customer) => customer.id === customerId);
-}
-
 // Check if undo is available
 export function canUndo(state) {
   return state.actionHistory.length > 0;

@@ -235,7 +235,6 @@ export class CustomersScreen {
   handleSaveCustomer(isEdit) {
     const form = document.getElementById('customer-form');
     if (!form) {
-      console.error('Customer form not found');
       return;
     }
 
@@ -244,8 +243,6 @@ export class CustomersScreen {
     const phone = formData.get('phone');
     const email = formData.get('email');
 
-    console.log('Saving customer:', { name, phone, email, isEdit });
-
     if (!name) {
       toast('Please enter a name', 'error');
       return;
@@ -253,7 +250,6 @@ export class CustomersScreen {
 
     try {
       if (isEdit && this.editing) {
-        console.log('Updating customer:', this.editing.id);
         const result = updateCustomer(this.editing.id, { name, phone, email });
         if (result.success) {
           toast('Customer updated', 'success');
@@ -262,7 +258,6 @@ export class CustomersScreen {
           return;
         }
       } else {
-        console.log('Adding new customer');
         const result = addCustomer(name, phone, email);
         if (result.success) {
           toast('Customer added', 'success');
@@ -273,11 +268,8 @@ export class CustomersScreen {
       }
 
       this.editing = null;
-      console.log('Calling updateCustomerList()');
       this.updateCustomerList();
-      console.log('Customer list updated');
     } catch (error) {
-      console.error('Error saving customer:', error);
       toast(error.message || 'Failed to save customer', 'error');
     }
   }

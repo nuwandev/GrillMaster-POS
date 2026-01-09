@@ -7,7 +7,6 @@ import {
   setOrderType,
   store,
 } from '../../state/index.js';
-import { updateSection } from '../../ui/dom-utils.js';
 import { Header } from '../../ui/header.js';
 import { toast } from '../../ui/modal.js';
 
@@ -35,8 +34,8 @@ export class NewOrderScreen {
         <div class="flex-1 overflow-y-auto p-4 md:p-6" style="min-height: 0;">
           <div class="w-full space-y-4">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              ${this.renderOrderTypeSection()}
-              ${this.renderCustomerSection()}
+              <div>${this.renderOrderTypeSection()}</div>
+              <div>${this.renderCustomerSection()}</div>
             </div>
             ${this.renderStartButton()}
           </div>
@@ -83,16 +82,22 @@ export class NewOrderScreen {
       <div data-customer-section class="bg-white rounded border border-neutral-200 p-5 md:p-6">
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-base font-semibold text-neutral-900">Customer</h2>
-          ${selectedCustomer ? `<span class="text-xs text-success font-medium">✓ ${selectedCustomer.name}</span>` : '<span class="text-xs text-neutral-400">Optional</span>'}
+          <span data-selected-customer-badge>${selectedCustomer ? `<span class="text-xs text-success font-medium">✓ ${selectedCustomer.name}</span>` : '<span class="text-xs text-neutral-400">Optional</span>'}</span>
         </div>
         <div class="relative">
           <input type="text" data-search placeholder="Search name or phone..." value="${this.query}" oninput="newOrderScreen.handleSearchInput(this)"
             class="w-full px-4 py-2.5 border border-neutral-300 rounded focus:border-primary focus:outline-none transition-colors placeholder:text-neutral-400" />
           ${this.query ? '<button onclick="newOrderScreen.clearSearch()" class="absolute right-3 top-2.5 text-neutral-400 hover:text-neutral-600 text-xl">×</button>' : ''}
         </div>
-        ${this.renderCustomerActions()}
-        ${this.showAddForm ? this.renderAddCustomerForm() : ''}
-        ${this.renderCustomerResults()}
+        <div data-customer-actions-container>
+          ${this.renderCustomerActions()}
+        </div>
+        <div data-add-form-container>
+          ${this.showAddForm ? this.renderAddCustomerForm() : ''}
+        </div>
+        <div data-customer-results-container>
+          ${this.renderCustomerResults()}
+        </div>
       </div>
     `;
   }
@@ -145,10 +150,9 @@ export class NewOrderScreen {
 
     return `
       <div class="mt-4">
-        <div class="text-xs font-medium text-neutral-500 mb-2 px-2">${this.query ? 'SEARCH RESULTS' : 'RECENT CUSTOMERS'}</div>
+        <div class="text-xs font-medium text-neutral-500 mb-2 px-2">${this.query ? `SEARCH RESULTS (${filteredCustomers.length})` : `RECENT CUSTOMERS (${Math.min(filteredCustomers.length, MAX_CUSTOMER_DISPLAY)} of ${store.getState().customers.filter((c) => c.name !== 'Guest').length})`}</div>
         <div class="max-h-72 overflow-y-auto divide-y border border-neutral-200 rounded" data-customer-list>
           ${filteredCustomers
-            .slice(0, MAX_CUSTOMER_DISPLAY)
             .map((cust) => this.renderCustomerItem(cust))
             .join('')}
         </div>
@@ -159,13 +163,13 @@ export class NewOrderScreen {
   renderCustomerItem(customer) {
     const isSelected = store.getState().currentCustomer?.id === customer.id;
     return `
-      <div onclick="newOrderScreen.selectCustomer('${customer.id}')" class="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 cursor-pointer transition-colors ${isSelected ? 'bg-primary/10 border-l-4 border-primary' : ''}">
+      <div data-customer-id="${customer.id}" onclick="newOrderScreen.selectCustomer('${customer.id}')" class="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 cursor-pointer transition-colors ${isSelected ? 'bg-primary/10 border-l-4 border-primary' : ''}">
         <div class="w-10 h-10 rounded-full bg-neutral-200 flex items-center justify-center font-bold text-neutral-600 text-sm">${customer.name.charAt(0).toUpperCase()}</div>
         <div class="flex-1 min-w-0">
           <div class="font-medium text-neutral-900 truncate text-sm">${customer.name}</div>
           ${customer.phone ? `<div class="text-xs text-neutral-500">${customer.phone}</div>` : ''}
         </div>
-        ${isSelected ? '<span class="text-primary">✓</span>' : ''}
+        <span data-checkmark>${isSelected ? '<span class="text-primary">✓</span>' : ''}</span>
       </div>
     `;
   }
@@ -182,24 +186,36 @@ export class NewOrderScreen {
 
   // Filter customers by search query (name or phone)
   getFilteredCustomers() {
+    const allCustomers = store.getState().customers;
     const query = this.query.toLowerCase();
+
+    // Always filter out Guest first
+    const withoutGuest = allCustomers.filter((c) => c.name !== 'Guest');
+
     if (!query) {
-      return store
-        .getState()
-        .customers.filter((c) => c.name !== 'Guest')
+      // No search - return recent customers (sorted by ID descending, newest first)
+      return withoutGuest
+        .sort((a, b) => b.id - a.id)
         .slice(0, MAX_CUSTOMER_DISPLAY);
     }
-    return store
-      .getState()
-      .customers.filter(
-        (c) => c.name.toLowerCase().includes(query) || c.phone.includes(query)
-      );
+
+    // Search by name or phone - return ALL matches (no limit for search)
+    return withoutGuest.filter(
+      (c) => c.name.toLowerCase().includes(query) || c.phone.includes(query)
+    );
   }
 
   selectOrderType(type) {
     this.selectedType = type;
     setOrderType(type);
-    updateSection('[data-order-type-section]', this.renderOrderTypeSection());
+    const section = document.querySelector('[data-order-type-section]');
+    if (section) {
+      const html = this.renderOrderTypeSection();
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = html;
+      const innerContent = tempDiv.firstElementChild?.innerHTML || '';
+      section.innerHTML = innerContent;
+    }
     this.updateStartButton();
   }
 
@@ -207,21 +223,23 @@ export class NewOrderScreen {
     this.query = input.value;
     // Only update results, not the input itself to prevent losing focus
     const resultsContainer = document.querySelector(
-      '[data-customer-list]'
-    )?.parentElement;
+      '[data-customer-results-container]'
+    );
     if (resultsContainer) {
-      resultsContainer.outerHTML = this.renderCustomerResults();
+      resultsContainer.innerHTML = this.renderCustomerResults();
     }
     // Update the actions bar (Guest button, Add New button)
-    const actionsContainer = document.querySelector('[data-customer-actions]');
+    const actionsContainer = document.querySelector(
+      '[data-customer-actions-container]'
+    );
     if (actionsContainer) {
-      actionsContainer.outerHTML = this.renderCustomerActions();
+      actionsContainer.innerHTML = this.renderCustomerActions();
     }
   }
 
   clearSearch() {
     this.query = '';
-    this.updateCustomerSection();
+    this.updateCustomerSection(true);
   }
 
   selectGuest() {
@@ -238,9 +256,9 @@ export class NewOrderScreen {
   }
 
   selectCustomer(customerId) {
-    const customer = store
-      .getState()
-      .customers.find((c) => c.id === customerId);
+    const state = store.getState();
+    // Use == for type coercion (onclick passes string but IDs might be numbers)
+    const customer = state.customers.find((c) => c.id == customerId);
     if (customer) {
       setCurrentCustomer(customer);
       this.updateCustomerSection();
@@ -284,6 +302,7 @@ export class NewOrderScreen {
 
     try {
       const result = addCustomer(this.newName, this.newPhone, this.newEmail);
+
       if (result.success) {
         setCurrentCustomer(result.customer);
         toast(`Customer "${result.customer.name}" added`, 'success');
@@ -292,7 +311,8 @@ export class NewOrderScreen {
         this.newPhone = '';
         this.newEmail = '';
         this.query = '';
-        this.updateCustomerSection();
+        // Update list to show new customer
+        this.updateCustomerSection(true);
       } else {
         toast(result.error || 'Failed to add customer', 'error');
       }
@@ -311,8 +331,71 @@ export class NewOrderScreen {
     globalThis.app.navigate('pos');
   }
 
-  updateCustomerSection() {
-    updateSection('[data-customer-section]', this.renderCustomerSection());
+  updateCustomerSection(updateList = false) {
+    const selectedCustomer = store.getState().currentCustomer;
+
+    // Update header badge
+    const badge = document.querySelector('[data-selected-customer-badge]');
+    if (badge) {
+      badge.innerHTML = selectedCustomer
+        ? `<span class="text-xs text-success font-medium">✓ ${selectedCustomer.name}</span>`
+        : '<span class="text-xs text-neutral-400">Optional</span>';
+    }
+
+    // Update customer actions (Guest button, Add New button)
+    const actionsContainer = document.querySelector(
+      '[data-customer-actions-container]'
+    );
+    if (actionsContainer) {
+      actionsContainer.innerHTML = this.renderCustomerActions();
+    }
+
+    // Update add form visibility
+    const addFormContainer = document.querySelector(
+      '[data-add-form-container]'
+    );
+    if (addFormContainer) {
+      addFormContainer.innerHTML = this.showAddForm
+        ? this.renderAddCustomerForm()
+        : '';
+    }
+
+    // Update customer list if needed (e.g., after adding new customer)
+    if (updateList) {
+      const resultsContainer = document.querySelector(
+        '[data-customer-results-container]'
+      );
+      if (resultsContainer) {
+        resultsContainer.innerHTML = this.renderCustomerResults();
+      }
+    } else {
+      // Only update customer item styling (remove old selection, add new)
+      const allCustomerItems = document.querySelectorAll('[data-customer-id]');
+      allCustomerItems.forEach((item) => {
+        const customerId = item.getAttribute('data-customer-id');
+        const isSelected =
+          selectedCustomer && customerId == selectedCustomer.id;
+
+        // Update classes
+        if (isSelected) {
+          item.classList.add('bg-primary/10', 'border-l-4', 'border-primary');
+        } else {
+          item.classList.remove(
+            'bg-primary/10',
+            'border-l-4',
+            'border-primary'
+          );
+        }
+
+        // Update checkmark
+        const checkmark = item.querySelector('[data-checkmark]');
+        if (checkmark) {
+          checkmark.innerHTML = isSelected
+            ? '<span class="text-primary">✓</span>'
+            : '';
+        }
+      });
+    }
   }
 
   updateStartButton() {

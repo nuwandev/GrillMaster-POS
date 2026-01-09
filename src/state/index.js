@@ -280,22 +280,6 @@ export function getTopProducts(limit) {
   return selectors.getTopProducts(store.getState(), limit);
 }
 
-export function getCartItem(productId) {
-  return selectors.getCartItem(store.getState(), productId);
-}
-
-export function getProductById(productId) {
-  return selectors.getProductById(store.getState(), productId);
-}
-
-export function getOrderById(orderId) {
-  return selectors.getOrderById(store.getState(), orderId);
-}
-
-export function getCustomerById(customerId) {
-  return selectors.getCustomerById(store.getState(), customerId);
-}
-
 export function canUndo() {
   return selectors.canUndo(store.getState());
 }

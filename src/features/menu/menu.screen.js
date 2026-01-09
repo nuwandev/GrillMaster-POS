@@ -270,15 +270,12 @@ export class MenuScreen {
   }
 
   openEditModal(productId) {
-    console.log('Opening edit modal for product:', productId, typeof productId);
     this.editingProduct = store.getState().products.find(
       (prod) => prod.id == productId // Use == for type coercion
     );
-    console.log('Found product:', this.editingProduct);
     if (this.editingProduct) {
       this.showProductModal();
     } else {
-      console.error('Product not found with id:', productId);
     }
   }
 
@@ -328,7 +325,6 @@ export class MenuScreen {
   handleSaveProduct(isEdit) {
     const form = document.getElementById('product-form');
     if (!form) {
-      console.error('Product form not found');
       return;
     }
 
@@ -338,15 +334,12 @@ export class MenuScreen {
     const category = formData.get('category');
     const image = formData.get('image') || 'products/placeholder.jpg';
 
-    console.log('Saving product:', { name, price, category, image, isEdit });
-
     if (!name || !category || isNaN(price)) {
       toast('Please fill in all required fields', 'error');
       return;
     }
 
     if (isEdit && this.editingProduct) {
-      console.log('Updating product:', this.editingProduct.id);
       const result = updateProduct(this.editingProduct.id, {
         name,
         price,
@@ -360,7 +353,6 @@ export class MenuScreen {
         return;
       }
     } else {
-      console.log('Adding new product');
       const result = addProduct(name, price, category, image);
       if (result.success) {
         toast('Product added', 'success');
@@ -372,10 +364,8 @@ export class MenuScreen {
 
     this.editingProduct = null;
     this.closeModal();
-    console.log('Calling updateProductsGrid()');
     this.updateProductsGrid();
     this.updateCategoryTabs();
-    console.log('Product grid updated');
   }
 
   async handleDelete(productId) {

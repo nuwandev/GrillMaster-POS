@@ -248,7 +248,6 @@ export class OrdersScreen {
       toast('Order not found', 'error');
       return;
     }
-
     const result = markOrderPaid(orderId, order.total);
     if (result.success) {
       toast(`Order #${orderId} marked as paid`, 'success');
