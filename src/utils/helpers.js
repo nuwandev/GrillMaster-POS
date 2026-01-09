@@ -1,6 +1,8 @@
 // Pure utility functions - no side effects
 
-import { CURRENCY } from '../core/constants.js';
+import { BUSINESS_CONFIG } from '../core/config.js';
+
+const CURRENCY = BUSINESS_CONFIG.CURRENCY;
 
 // Format number as LKR currency (e.g., "LKR 1,500.00")
 export function formatCurrency(amount) {

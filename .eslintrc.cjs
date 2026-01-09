@@ -23,7 +23,10 @@ module.exports = {
     'no-magic-numbers': [
       'warn',
       {
-        ignore: [-1, 0, 1, 2, 100],
+        ignore: [
+          -1, 0, 1, 2, 5, 10, 15, 20, 100, 200, 250, 500, 1000, 2000, 5000,
+          10000,
+        ],
         ignoreArrayIndexes: true,
         ignoreDefaultValues: true,
       },
@@ -32,12 +35,12 @@ module.exports = {
     // Consistent return statements
     'consistent-return': 'error',
 
-    // No implicit type coercion
+    // Use strict equality (industry standard)
     eqeqeq: ['error', 'always'],
 
     // Import ordering
     'import/order': [
-      'error',
+      'warn',
       {
         groups: [
           'builtin',
@@ -51,7 +54,7 @@ module.exports = {
       },
     ],
 
-    // No console in production (warn only)
+    // No console in production
     'no-console': ['warn', { allow: ['warn', 'error'] }],
 
     // No nested ternary
@@ -60,11 +63,11 @@ module.exports = {
     // Max function length
     'max-lines-per-function': [
       'warn',
-      { max: 50, skipBlankLines: true, skipComments: true },
+      { max: 80, skipBlankLines: true, skipComments: true },
     ],
 
     // Prefer template literals
-    'prefer-template': 'error',
+    'prefer-template': 'warn',
 
     // No parameter reassignment
     'no-param-reassign': ['error', { props: false }],

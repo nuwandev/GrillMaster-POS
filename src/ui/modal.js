@@ -129,10 +129,10 @@ export function toast(message, type = 'info', duration = TOAST_DURATION_MS) {
   document.querySelector('[data-toast]')?.remove();
 
   const typeConfig = {
-    info: { bg: 'bg-gray-800', icon: 'ℹ️' },
+    info: { bg: 'bg-gray-800', icon: 'i' },
     success: { bg: 'bg-green-600', icon: '✓' },
-    warning: { bg: 'bg-yellow-500', icon: '⚠️' },
-    error: { bg: 'bg-red-600', icon: '✕' },
+    warning: { bg: 'bg-yellow-500', icon: '!' },
+    error: { bg: 'bg-red-600', icon: '✗' },
   };
 
   const config = typeConfig[type] || typeConfig.info;
