@@ -62,7 +62,9 @@ export class POSScreen {
         </div>
 
         <!-- Cart Sidebar - Fixed Width -->
-        ${this.renderCartSection()}
+        <div data-cart-section class="w-full md:w-96 shrink-0 bg-white border-l border-neutral-200 flex flex-col" style="max-width: 24rem;">
+          ${this.renderCartSection()}
+        </div>
 
         ${this.showSuccess ? this.renderSuccessModal() : ''}
       </div>
@@ -140,7 +142,6 @@ export class POSScreen {
     const lastAction = store.getState().lastAction;
 
     return `
-      <div data-cart-section class="w-full md:w-96 shrink-0 bg-white border-l border-neutral-200 flex flex-col" style="max-width: 24rem;">
         <!-- Cart Header - Fixed Height -->
         <div class="h-14 shrink-0 px-4 border-b border-neutral-200 bg-primary flex items-center justify-between">
           <h2 class="text-lg font-bold text-white">Order</h2>
@@ -156,7 +157,6 @@ export class POSScreen {
         <div class="shrink-0 border-t border-neutral-200 bg-neutral-50">
           ${this.renderCartFooter(total, cart.length > 0, canUndo, lastAction)}
         </div>
-      </div>
     `;
   }
 
